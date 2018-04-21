@@ -11,8 +11,10 @@ import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.File;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.User;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
+import org.telegram.telegrambots.exceptions.TelegramApiValidationException;
 
 public class TestBot extends TelegramLongPollingBot{
 
@@ -39,6 +41,16 @@ public class TestBot extends TelegramLongPollingBot{
 	 */
 	private void startWelcomeDialog(Message message) {
 		User maybeAdmin = message.getFrom();
+		KeyboardButton kb = new KeyboardButton("Darf ich deine Telefonnummer haben?");
+		kb.setRequestContact(true);
+		try {
+			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId());
+			sendMsg.setText("Test");
+			execute(sendMsg);
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
+		}
+		
 		System.out.println(maybeAdmin.getId());
 	}
 
@@ -60,11 +72,11 @@ public class TestBot extends TelegramLongPollingBot{
 		}else {
 			sendMsg.setText("Sorry, das habe ich nicht verstanden...");
 		}
-		try {
+		/*try {
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
-		}
+		}*/
 	}
 	
 	/**
