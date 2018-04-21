@@ -35,7 +35,7 @@ public class VoiceProcessing {
 		    String filePath = voiceFileOgg.getPath().substring(0, voiceFileOgg.getPath().length() - 4);
 		    try {
 		    	System.out.println("FFMpeg conversion start:");
-		    	String command[] = {"lib/ffmpeg", "-i",voiceFileOgg.getPath(), filePath + ".wav"};
+		    	String command[] = {"lib/ffmpeg", "-y", "-i", voiceFileOgg.getPath(), filePath + ".wav"};
 		    	Process p = Runtime.getRuntime().exec(command);
 		    	p.waitFor();
 		    	System.out.println("FFMpeg conversion done!");
