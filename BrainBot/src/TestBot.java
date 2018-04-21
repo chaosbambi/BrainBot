@@ -30,6 +30,8 @@ public class TestBot extends TelegramLongPollingBot{
 	private DialogStates dState = DialogStates.PendingForDialog;
 	private WelcomeDialogStates wdState = WelcomeDialogStates.DialogUnfinished;
 	
+	private HashMap<Long,UserData> users = new HashMap<>();
+	
 	@Override
 	public String getBotUsername() {
 		return "BrainBot Test";
@@ -84,6 +86,13 @@ public class TestBot extends TelegramLongPollingBot{
 			processWelcomeDialog(update.getMessage());
 			
 		}else if(update.getMessage().getText().equals("/start")){
+			if(users.containsKey(update.getMessage().getChatId())){
+				//breche ab
+			} else if(UserData.checkForUser(update.getMessage().getChatId())) {
+				users.put(update.getMessage().getChatId(),null);
+				//breche ab
+			}
+		
 			
 			if(wdState == WelcomeDialogStates.DialogUnfinished) {
 				dState = DialogStates.WelcomeDialog;
@@ -222,37 +231,37 @@ public class TestBot extends TelegramLongPollingBot{
 		
 		switch (wdState) {
 		case DialogUnfinished:
-			
+			users.put(message.getChatId(), new UserData(message.getChatId()));
 			msgText = "Wie lautet dein Nachname?";
 			wdState = WelcomeDialogStates.REQUESTED_LAST_NAME;
 			break;
 			
 		case REQUESTED_LAST_NAME:
-			
+			users.get(message.getChatId()).setLastName(message.getText());
 			msgText = "Sehr gut. Und dein Vorname?";
 			wdState = WelcomeDialogStates.REQUESTED_FIRST_NAME;
 			break;
 			
 		case REQUESTED_FIRST_NAME:
-			
+			users.get(message.getChatId()).setFirstName(message.getText());
 			msgText = "Adresse";
 			wdState = WelcomeDialogStates.REQUESTED_ADDRESS;
 			break;
 			
 		case REQUESTED_ADDRESS:
-			
+			users.get(message.getChatId()).setAddress(message.getText());
 			msgText = "Ort";
 			wdState = WelcomeDialogStates.REQUESTED_CITY;
 			break;
 			
 		case REQUESTED_CITY:
-			
+			users.get(message.getChatId()).setCity(message.getText());
 			msgText = "Telephonnummer";
 			wdState = WelcomeDialogStates.REQUESTED_PHONE;
 			break;
 			
 		case REQUESTED_PHONE:
-			
+			users.get(message.getChatId()).setTel(message.getText());
 			msgText = "Email";
 			wdState = WelcomeDialogStates.REQUESTED_MAIL;
 			break;
@@ -265,9 +274,11 @@ public class TestBot extends TelegramLongPollingBot{
 				dState = DialogStates.PendingForDialog;
 				
 			}else {
+				users.get(message.getChatId()).setMail(message.getText());
 				msgText = "Vielen Dank";
 				dState = DialogStates.PendingForDialog;
 				wdState = WelcomeDialogStates.DialogFinished;
+				users.get(message.getChatId()).saveInDb();
 			}
 			
 			break;
