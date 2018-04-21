@@ -25,6 +25,9 @@ import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 public class TestBot extends TelegramLongPollingBot{
 
+	private DialogStates dState = DialogStates.PendingForDialog;
+	private WelcomeDialogStates wdState = WelcomeDialogStates.DialogUnfinished;
+	
 	@Override
 	public String getBotUsername() {
 		return "BrainBot Test";
@@ -65,8 +68,48 @@ public class TestBot extends TelegramLongPollingBot{
 			} catch (TelegramApiException e) {
 				e.printStackTrace();
 			}
+		}else if(dState == DialogStates.WelcomeDialog) {
+		
+			processWelcomeDialog(update.getMessage());
+			
 		}else if(update.getMessage().getText().equals("/start")){
-			startWelcomeDialog(update.getMessage());
+			
+			if(wdState == WelcomeDialogStates.DialogUnfinished) {
+				dState = DialogStates.WelcomeDialog;
+				
+				sendMsg.setText("Hi, ich bin dein BrainGrid-Bot.\n"
+						+ "Zu Beginn möchte ich dich nach ein paar Informationen zu deiner Person fragen, "
+						+ "damit du in Zukunft alle Funktionen ganz bequem und auf schnellstem Wege nutzen kannst.");
+				try {
+					execute(sendMsg);
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+				
+				wdState = WelcomeDialogStates.REQUESTED_LAST_NAME;
+				
+				processWelcomeDialog(update.getMessage());
+			}
+			
+		}else if(update.getMessage().getText().equals("/complain")){
+			/* Change for different dialog
+			if(wdState == WelcomeDialogStates.DialogUnfinished) {
+				dState = DialogStates.WelcomeDialog;
+				
+				sendMsg.setText("Hi, ich bin dein BrainGrid-Bot.\n"
+						+ "Zu Beginn möchte ich dich nach ein paar Informationen zu deiner Person fragen, "
+						+ "damit du in Zukunft alle Funktionen ganz bequem und auf schnellstem Wege nutzen kannst.");
+				try {
+					execute(sendMsg);
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+				
+				wdState = WelcomeDialogStates.REQUESTED_LAST_NAME;
+				
+				processWelcomeDialog(update.getMessage());
+			}
+			*/
 		}else if(update.getMessage().getText().equals("/here")) {
 			startLocationDialog(update.getMessage());
 		}else if(update.getMessage().getText().equals("Nein, danke.")) {
@@ -162,9 +205,76 @@ public class TestBot extends TelegramLongPollingBot{
 	 * This method gathers the personal information from the User
 	 * @param message The Message that requested the start dialogue
 	 */
-	private void startWelcomeDialog(Message message) {
+	private void processWelcomeDialog(Message message) {
+		SendMessage sendMsg = new SendMessage().setChatId(message.getChatId());
+		String msgText = "Ups, da ist wohl ein Fehler aufgetreten.";
+		
+		switch (wdState) {
+		case DialogUnfinished:
+			
+			msgText = "Wie lautet dein Nachname?";
+			wdState = WelcomeDialogStates.REQUESTED_LAST_NAME;
+			break;
+			
+		case REQUESTED_LAST_NAME:
+			
+			msgText = "Sehr gut. Und dein Vorname?";
+			wdState = WelcomeDialogStates.REQUESTED_FIRST_NAME;
+			break;
+			
+		case REQUESTED_FIRST_NAME:
+			
+			msgText = "Adresse";
+			wdState = WelcomeDialogStates.REQUESTED_ADDRESS;
+			break;
+			
+		case REQUESTED_ADDRESS:
+			
+			msgText = "Ort";
+			wdState = WelcomeDialogStates.REQUESTED_CITY;
+			break;
+			
+		case REQUESTED_CITY:
+			
+			msgText = "Telephonnummer";
+			wdState = WelcomeDialogStates.REQUESTED_PHONE;
+			break;
+			
+		case REQUESTED_PHONE:
+			
+			msgText = "Email";
+			wdState = WelcomeDialogStates.REQUESTED_MAIL;
+			break;
+			
+		case REQUESTED_MAIL:
+			
+			if(message.getText().trim().toLowerCase().equals("abbrechen")) {
+				
+				wdState = WelcomeDialogStates.DialogUnfinished;
+				dState = DialogStates.PendingForDialog;
+				
+			}else {
+				msgText = "Vielen Dank";
+				dState = DialogStates.PendingForDialog;
+				wdState = WelcomeDialogStates.DialogFinished;
+			}
+			
+			break;
+			
+		default:
+			break;
+		}
+		
+		sendMsg.setText(msgText);
+		try {
+			execute(sendMsg);
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
+		}
+		
+		
 		User maybeAdmin = message.getFrom();
-		KeyboardButton kb = new KeyboardButton("Darf ich deine Telefonnummer haben?");
+		/*KeyboardButton kb = new KeyboardButton("Darf ich deine Telefonnummer haben?");
 		kb.setRequestContact(true);
 		KeyboardRow kr = new KeyboardRow();
 		kr.add(kb);
@@ -173,12 +283,12 @@ public class TestBot extends TelegramLongPollingBot{
 		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
 		
 		try {
-			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:");
+			sendMsg.setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:");
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
-		
+		*/
 		System.out.println(maybeAdmin.getId());
 	}
 
