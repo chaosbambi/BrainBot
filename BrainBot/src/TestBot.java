@@ -64,6 +64,7 @@ public class TestBot extends TelegramLongPollingBot{
 
 	/*
 	 * This method gathers the personal information from the User
+	 * @param message The Message that requested the start dialogue
 	 */
 	private void startWelcomeDialog(Message message) {
 		User maybeAdmin = message.getFrom();
@@ -91,8 +92,8 @@ public class TestBot extends TelegramLongPollingBot{
 	}
 	
 	/**
-	 * Empfängt text aus einer nachricht.
-	 * @param update Das Update-Objekt, was die Verarbeitung ausgelöst hat.
+	 * Receives text based messages.
+	 * @param update The Update object that triggered the evaluation
 	 */
 	private void receiveText(Update update) {
 		SendMessage sendMsg = new SendMessage().setChatId(update.getMessage().getChatId());
@@ -107,6 +108,13 @@ public class TestBot extends TelegramLongPollingBot{
 			startWelcomeDialog(update.getMessage());
 		}else if(update.getMessage().getText().equals("/here")) {
 			startLocationDialog(update.getMessage());
+		}else if(update.getMessage().getText().equals("Nein, danke.")) {
+			sendMsg.setText("Schade. So ist es für mich schwieriger die nächste Haltestelle zu finden \u2639");
+			try {
+				execute(sendMsg);
+			} catch (TelegramApiException e) {
+				e.printStackTrace();
+			}
 		}else {
 			sendMsg.setText("Sorry, das habe ich nicht verstanden...");
 			try {
@@ -117,6 +125,10 @@ public class TestBot extends TelegramLongPollingBot{
 		}
 	}
 	
+	/**
+	 * Starts the user dialogue requesting a location share.
+	 * @param message Message that requested a location evaluation
+	 */
 	private void startLocationDialog(Message message) {
 		KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
 		KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
@@ -192,6 +204,11 @@ public class TestBot extends TelegramLongPollingBot{
 		}
 	}
 	
+	/**
+	 * Proper location handling
+	 * TODO
+	 * @param update
+	 */
 	private void handleLocation(Update update) {
 		Location loc = update.getMessage().getLocation();
 		HashMap<String, Location> stops = new HashMap<>();
