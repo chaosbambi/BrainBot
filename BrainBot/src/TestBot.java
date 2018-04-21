@@ -191,15 +191,13 @@ public class TestBot extends TelegramLongPollingBot {
 	 */
 	private void handleLocation(Update update) {
 		Location loc = update.getMessage().getLocation();
-		HashMap<String, Location> stops = new HashMap<>();
-		HashMap<String, Double> distances = new HashMap<>();
+		
+		RNVApiHandler rna = new RNVApiHandler();
+		RNVHaltestelle closest = rna.getClosestStop(loc);
+		
+		
 		// Maybe other maps? List of Map.Entry? Will need to be sorted!
 		// Query possible Stops, put them in "stops"
-		while (stops.entrySet().iterator().hasNext()) {
-			Map.Entry<String, Location> kvpair = stops.entrySet().iterator().next();
-			distances.put(kvpair.getKey(), Math.pow(kvpair.getValue().getLatitude() - loc.getLatitude(), 2.0)
-					+ Math.pow(kvpair.getValue().getLongitude() - loc.getLongitude(), 2.0));
-		}
 		// Sort by distance
 		// Select stop with lowest distance
 		// Runtime: O(way too much)
