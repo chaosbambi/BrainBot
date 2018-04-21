@@ -1,3 +1,4 @@
+
 //import java.io.File;
 
 import java.io.IOException;
@@ -25,11 +26,12 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
-public class TestBot extends TelegramLongPollingBot{
+public class TestBot extends TelegramLongPollingBot {
 
 	private DialogStates dState = DialogStates.PendingForDialog;
 	private WelcomeDialogStates wdState = WelcomeDialogStates.DialogUnfinished;
-	
+	private ComplainDialogStates cdState = ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE;
+
 	@Override
 	public String getBotUsername() {
 		return "BrainBot Test";
@@ -43,11 +45,10 @@ public class TestBot extends TelegramLongPollingBot{
 	@Override
 	public void onUpdateReceived(Update update) {
 
-
-		if(update.hasMessage()) {
-			if(update.getMessage().hasText()) {
+		if (update.hasMessage()) {
+			if (update.getMessage().hasText()) {
 				handleText(update);
-			}else if(update.getMessage().getVoice() != null) {
+			} else if (update.getMessage().getVoice() != null) {
 				VoiceProcessing vp;
 				try {
 					vp = new VoiceProcessing(handleVoice(update));
@@ -58,9 +59,9 @@ public class TestBot extends TelegramLongPollingBot{
 					e1.printStackTrace();
 				}
 				handleVoice(update);
-			}else if(update.getMessage().hasLocation()) {
+			} else if (update.getMessage().hasLocation()) {
 				locationTest(update);
-			}else if(update.getMessage().hasContact()) {
+			} else if (update.getMessage().hasContact()) {
 				handleContact(update);
 			}
 		}
@@ -68,26 +69,28 @@ public class TestBot extends TelegramLongPollingBot{
 
 	/**
 	 * Receives text based messages.
-	 * @param update The Update object that triggered the evaluation
+	 * 
+	 * @param update
+	 *            The Update object that triggered the evaluation
 	 */
 	private void handleText(Update update) {
 		SendMessage sendMsg = new SendMessage().setChatId(update.getMessage().getChatId());
-		if(update.getMessage().getText().toLowerCase().trim().matches("ping[\\.!]*")) {
+		if (update.getMessage().getText().toLowerCase().trim().matches("ping[\\.!]*")) {
 			sendMsg.setText("Pong!");
 			try {
 				execute(sendMsg);
 			} catch (TelegramApiException e) {
 				e.printStackTrace();
 			}
-		}else if(dState == DialogStates.WelcomeDialog) {
-		
+		} else if (dState == DialogStates.WelcomeDialog) {
+
 			processWelcomeDialog(update.getMessage());
-			
-		}else if(update.getMessage().getText().equals("/start")){
-			
-			if(wdState == WelcomeDialogStates.DialogUnfinished) {
+
+		} else if (update.getMessage().getText().equals("/start")) {
+
+			if (wdState == WelcomeDialogStates.DialogUnfinished) {
 				dState = DialogStates.WelcomeDialog;
-				
+
 				sendMsg.setText("Hi, ich bin dein BrainGrid-Bot.\n"
 						+ "Zu Beginn möchte ich dich nach ein paar Informationen zu deiner Person fragen, "
 						+ "damit du in Zukunft alle Funktionen ganz bequem und auf schnellstem Wege nutzen kannst.");
@@ -96,39 +99,40 @@ public class TestBot extends TelegramLongPollingBot{
 				} catch (TelegramApiException e) {
 					e.printStackTrace();
 				}
-				
+
 				processWelcomeDialog(update.getMessage());
 			}
-			
-		}else if(update.getMessage().getText().equals("/complain")){
-			/* Change for different dialog
-			if(wdState == WelcomeDialogStates.DialogUnfinished) {
-				dState = DialogStates.WelcomeDialog;
-				
-				sendMsg.setText("Hi, ich bin dein BrainGrid-Bot.\n"
-						+ "Zu Beginn möchte ich dich nach ein paar Informationen zu deiner Person fragen, "
-						+ "damit du in Zukunft alle Funktionen ganz bequem und auf schnellstem Wege nutzen kannst.");
+
+		} else if (dState == DialogStates.ComplainDialog) {
+
+			processComplainDialog(update.getMessage());
+
+		} else if (update.getMessage().getText().equals("/complain")) {
+
+			if (cdState == ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE) {
+				dState = DialogStates.ComplainDialog;
+
+				sendMsg.setText("Hi, gerne nehme ich deine Beschwerde auf.");
+
 				try {
 					execute(sendMsg);
 				} catch (TelegramApiException e) {
 					e.printStackTrace();
 				}
-				
-				wdState = WelcomeDialogStates.REQUESTED_LAST_NAME;
-				
-				processWelcomeDialog(update.getMessage());
+
+				processComplainDialog(update.getMessage());
 			}
-			*/
-		}else if(update.getMessage().getText().equals("/here")) {
+
+		} else if (update.getMessage().getText().equals("/here")) {
 			startLocationDialog(update.getMessage());
-		}else if(update.getMessage().getText().equals("Nein, danke.")) {
+		} else if (update.getMessage().getText().equals("Nein, danke.")) {
 			sendMsg.setText("Schade. So ist es für mich schwieriger die nächste Haltestelle zu finden \u2639");
 			try {
 				execute(sendMsg);
 			} catch (TelegramApiException e) {
 				e.printStackTrace();
 			}
-		}else {
+		} else {
 			sendMsg.setText("Sorry, das habe ich nicht verstanden...");
 			try {
 				execute(sendMsg);
@@ -139,49 +143,55 @@ public class TestBot extends TelegramLongPollingBot{
 	}
 
 	/**
-	 * Prints received contact information to console.
-	 * Can later handle database entry management.
-	 * @param update The Update that contained the message with the contact info
+	 * Prints received contact information to console. Can later handle database
+	 * entry management.
+	 * 
+	 * @param update
+	 *            The Update that contained the message with the contact info
 	 */
 	private void handleContact(Update update) {
 		User sender = update.getMessage().getFrom();
 		Contact cont = update.getMessage().getContact();
 		System.out.println("Daten Erhalten:");
-		System.out.println("User ID: " + sender.getId()); //In User und Contact enthalten
-		System.out.println("Username: " + sender.getUserName());	//May be Null
-		System.out.println("Name: " + cont.getFirstName() + " " + cont.getLastName());	//May contain null parts - in User und Contact enthalten
+		System.out.println("User ID: " + sender.getId()); // In User und Contact enthalten
+		System.out.println("Username: " + sender.getUserName()); // May be Null
+		System.out.println("Name: " + cont.getFirstName() + " " + cont.getLastName()); // May contain null parts - in
+																						// User und Contact enthalten
 		System.out.println("Tel.: " + cont.getPhoneNumber());
 	}
 
 	/**
-	 * Proper location handling
-	 * TODO
+	 * Proper location handling TODO
+	 * 
 	 * @param update
 	 */
 	private void handleLocation(Update update) {
 		Location loc = update.getMessage().getLocation();
 		HashMap<String, Location> stops = new HashMap<>();
 		HashMap<String, Double> distances = new HashMap<>();
-		//Maybe other maps? List of Map.Entry? Will need to be sorted!
-		//Query possible Stops, put them in "stops"
-		while(stops.entrySet().iterator().hasNext()) {
+		// Maybe other maps? List of Map.Entry? Will need to be sorted!
+		// Query possible Stops, put them in "stops"
+		while (stops.entrySet().iterator().hasNext()) {
 			Map.Entry<String, Location> kvpair = stops.entrySet().iterator().next();
-			distances.put(kvpair.getKey(), Math.pow(kvpair.getValue().getLatitude() - loc.getLatitude(), 2.0)+Math.pow(kvpair.getValue().getLongitude() - loc.getLongitude(), 2.0));
+			distances.put(kvpair.getKey(), Math.pow(kvpair.getValue().getLatitude() - loc.getLatitude(), 2.0)
+					+ Math.pow(kvpair.getValue().getLongitude() - loc.getLongitude(), 2.0));
 		}
-		//Sort by distance
-		//Select stop with lowest distance
-		//Runtime: O(way too much)
+		// Sort by distance
+		// Select stop with lowest distance
+		// Runtime: O(way too much)
 		/*
-		 * This is only a basic concept for finding the closest possible stop.
-		 * More advanced systems like travel time vs stop distance calculation would require a more refined algorithm.
+		 * This is only a basic concept for finding the closest possible stop. More
+		 * advanced systems like travel time vs stop distance calculation would require
+		 * a more refined algorithm.
 		 */
-		
-		
+
 	}
 
 	/**
 	 * Speichert eine empfangene Voice Nachricht als ogg datei
-	 * @param update Das Update-Objekt, was die Verarbeitung ausgelöst hat.
+	 * 
+	 * @param update
+	 *            Das Update-Objekt, was die Verarbeitung ausgelöst hat.
 	 */
 	private java.io.File handleVoice(Update update) {
 		java.io.File target = null;
@@ -195,14 +205,14 @@ public class TestBot extends TelegramLongPollingBot{
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
-		if(url != null && !url.isEmpty()) {
+		if (url != null && !url.isEmpty()) {
 			URL link = null;
 			try {
 				link = new URL(url);
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
-			 target = new java.io.File("voice/"+fileID+".ogg");
+			target = new java.io.File("voice/" + fileID + ".ogg");
 			try {
 				FileUtils.copyURLToFile(link, target, 1000, 2000);
 			} catch (IOException e) {
@@ -214,98 +224,167 @@ public class TestBot extends TelegramLongPollingBot{
 
 	/*
 	 * This method gathers the personal information from the User
+	 * 
 	 * @param message The Message that requested the start dialogue
 	 */
 	private void processWelcomeDialog(Message message) {
 		SendMessage sendMsg = new SendMessage().setChatId(message.getChatId());
 		String msgText = "Ups, da ist wohl ein Fehler aufgetreten.";
-		
+
 		switch (wdState) {
 		case DialogUnfinished:
-			
+
 			msgText = "Wie lautet dein Nachname?";
 			wdState = WelcomeDialogStates.REQUESTED_LAST_NAME;
 			break;
-			
+
 		case REQUESTED_LAST_NAME:
-			
+
 			msgText = "Sehr gut. Und dein Vorname?";
 			wdState = WelcomeDialogStates.REQUESTED_FIRST_NAME;
 			break;
-			
+
 		case REQUESTED_FIRST_NAME:
-			
+
 			msgText = "Adresse";
 			wdState = WelcomeDialogStates.REQUESTED_ADDRESS;
 			break;
-			
+
 		case REQUESTED_ADDRESS:
-			
+
 			msgText = "Ort";
 			wdState = WelcomeDialogStates.REQUESTED_CITY;
 			break;
-			
+
 		case REQUESTED_CITY:
-			
+
 			msgText = "Telephonnummer";
 			wdState = WelcomeDialogStates.REQUESTED_PHONE;
 			break;
-			
+
 		case REQUESTED_PHONE:
-			
+
 			msgText = "Email";
 			wdState = WelcomeDialogStates.REQUESTED_MAIL;
 			break;
-			
+
 		case REQUESTED_MAIL:
-			
-			if(message.getText().trim().toLowerCase().equals("abbrechen")) {
-				
+
+			if (message.getText().trim().toLowerCase().equals("abbrechen")) {
+
 				wdState = WelcomeDialogStates.DialogUnfinished;
 				dState = DialogStates.PendingForDialog;
-				
-			}else {
+
+			} else {
 				msgText = "Vielen Dank";
 				dState = DialogStates.PendingForDialog;
 				wdState = WelcomeDialogStates.DialogFinished;
 			}
-			
+
 			break;
-			
+
 		default:
 			break;
 		}
-		
+
 		sendMsg.setText(msgText);
 		try {
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
 		}
-		
-		
+
 		User maybeAdmin = message.getFrom();
-		/*KeyboardButton kb = new KeyboardButton("Darf ich deine Telefonnummer haben?");
-		kb.setRequestContact(true);
-		KeyboardRow kr = new KeyboardRow();
-		kr.add(kb);
-		ArrayList<KeyboardRow> rows = new ArrayList<>();
-		rows.add(kr);
-		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
-		
-		try {
-			sendMsg.setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:");
-			execute(sendMsg);
-		} catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
-		*/
+		/*
+		 * KeyboardButton kb = new
+		 * KeyboardButton("Darf ich deine Telefonnummer haben?");
+		 * kb.setRequestContact(true); KeyboardRow kr = new KeyboardRow(); kr.add(kb);
+		 * ArrayList<KeyboardRow> rows = new ArrayList<>(); rows.add(kr);
+		 * ReplyKeyboardMarkup rkm = new
+		 * ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+		 * 
+		 * try {
+		 * sendMsg.setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:"
+		 * ); execute(sendMsg); } catch (TelegramApiException e) { e.printStackTrace();
+		 * }
+		 */
 		System.out.println(maybeAdmin.getId());
+	}
+
+	private void processComplainDialog(Message message) {
+		SendMessage sendMsg = new SendMessage().setChatId(message.getChatId());
+		String msgText = "Ups, da ist wohl ein Fehler aufgetreten.";
+
+		switch (cdState) {
+		case COMPLAIN_DIALOG_STARTED:
+			
+			msgText = "Ort:";
+			cdState = ComplainDialogStates.REQUESTED_PLACE;
+			break;
+
+		case REQUESTED_PLACE:
+
+			msgText = "Grund:";
+			cdState = ComplainDialogStates.REQUESTED_REASON;
+			break;
+
+		case REQUESTED_REASON:
+
+			msgText = "Linie:";
+			cdState = ComplainDialogStates.REQUESTED_LINE;
+			break;
+
+		case REQUESTED_LINE:
+
+			msgText = "Richtung:";
+			cdState = ComplainDialogStates.REQUESTED_DIRECTION;
+			break;
+
+		case REQUESTED_DIRECTION:
+
+			msgText = "Uhrzeit:";
+			cdState = ComplainDialogStates.REQUESTED_TIME;
+			break;
+
+		case REQUESTED_TIME:
+
+			msgText = "Datum:";
+			cdState = ComplainDialogStates.REQUESTED_DATE;
+			break;
+
+		case REQUESTED_DATE:
+
+			msgText = "Haltestelle:";
+			cdState = ComplainDialogStates.REQUESTED_STATION;
+			break;
+
+		case REQUESTED_STATION:
+
+			msgText = "Nachricht:";
+			cdState = ComplainDialogStates.REQUESTED_MESSAGE;
+			break;
+
+		case REQUESTED_MESSAGE:
+
+			msgText = "Vielen Dank. Wir werden uns dem Problem schnellstmöglich annehmen.";
+			cdState = ComplainDialogStates.COMPLAIN_SEND;
+			break;
+
+		case COMPLAIN_SEND:
+
+			cdState = ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE;
+			break;
+
+		default:
+			break;
+		}
 	}
 
 	/**
 	 * Starts the user dialogue requesting a location share.
-	 * @param message Message that requested a location evaluation
+	 * 
+	 * @param message
+	 *            Message that requested a location evaluation
 	 */
 	private void startLocationDialog(Message message) {
 		KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
@@ -317,9 +396,10 @@ public class TestBot extends TelegramLongPollingBot{
 		ArrayList<KeyboardRow> rows = new ArrayList<>();
 		rows.add(kr);
 		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
-				
+
 		try {
-			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId()).setText("Möchtest du deinen Standort angeben?").setReplyMarkup(rkm);
+			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId())
+					.setText("Möchtest du deinen Standort angeben?").setReplyMarkup(rkm);
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			System.err.println("No message sent:");
@@ -328,9 +408,11 @@ public class TestBot extends TelegramLongPollingBot{
 	}
 
 	/**
-	 * Location handling proof of concept
-	 * A received location gets mirrored and then moves with live updates
-	 * @param update The Update-Object that triggered message processing
+	 * Location handling proof of concept A received location gets mirrored and then
+	 * moves with live updates
+	 * 
+	 * @param update
+	 *            The Update-Object that triggered message processing
 	 */
 	private void locationTest(Update update) {
 		Location loc = update.getMessage().getLocation();
@@ -345,7 +427,7 @@ public class TestBot extends TelegramLongPollingBot{
 		} catch (TelegramApiException e1) {
 			e1.printStackTrace();
 		}
-		if(sent != null) {
+		if (sent != null) {
 			Thread updater = new Thread(new LocationUpdater(sent.getMessageId(), cid, sl, this));
 			updater.start();
 		}
