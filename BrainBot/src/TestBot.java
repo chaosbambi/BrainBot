@@ -26,6 +26,7 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -35,6 +36,7 @@ public class TestBot extends TelegramLongPollingBot {
 	private WelcomeDialogStates wdState = WelcomeDialogStates.DialogUnfinished;
 
 	private HashMap<Long,UserData> users = new HashMap<>();
+	private HashMap<Long,ComplainForm> cfs = new HashMap<>();
 	
 	private ComplainDialogStates cdState = ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE;
 
@@ -346,56 +348,73 @@ public class TestBot extends TelegramLongPollingBot {
 
 		switch (cdState) {
 		case COMPLAIN_DIALOG_STARTED:
-			
+			cfs.put(chatId,new ComplainForm());
 			msgText = "Ort:";
 			cdState = ComplainDialogStates.REQUESTED_PLACE;
 			break;
 
 		case REQUESTED_PLACE:
-
+			cfs.get(chatId).setPlace(text);
 			msgText = "Grund:";
 			cdState = ComplainDialogStates.REQUESTED_REASON;
 			break;
 
 		case REQUESTED_REASON:
-
+			cfs.get(chatId).setReason(text);
 			msgText = "Linie:";
 			cdState = ComplainDialogStates.REQUESTED_LINE;
 			break;
 
 		case REQUESTED_LINE:
-
+			cfs.get(chatId).setLine(text);
 			msgText = "Richtung:";
 			cdState = ComplainDialogStates.REQUESTED_DIRECTION;
 			break;
 
 		case REQUESTED_DIRECTION:
-
+			cfs.get(chatId).setDirection(text);
 			msgText = "Uhrzeit:";
 			cdState = ComplainDialogStates.REQUESTED_TIME;
 			break;
 
 		case REQUESTED_TIME:
-
+			cfs.get(chatId).setTime(text);
 			msgText = "Datum:";
 			cdState = ComplainDialogStates.REQUESTED_DATE;
 			break;
 
 		case REQUESTED_DATE:
-
+			cfs.get(chatId).setDate(text);
 			msgText = "Haltestelle:";
 			cdState = ComplainDialogStates.REQUESTED_STATION;
 			break;
 
 		case REQUESTED_STATION:
-
+			cfs.get(chatId).setStation(text);
 			msgText = "Nachricht:";
 			cdState = ComplainDialogStates.REQUESTED_MESSAGE;
 			break;
 
 		case REQUESTED_MESSAGE:
-
+			cfs.get(chatId).setMessage(text);
 			msgText = "Vielen Dank. Wir werden uns dem Problem schnellstmöglich annehmen.";
+			UserData user = null;
+			if(users.containsKey(chatId)) {
+				user=users.get(chatId);
+			} else {
+				user = UserData.checkForUser(chatId);
+				if(user != null ) {
+					users.put(chatId, user);
+				}else {
+					//TODO abbruch error
+				}
+			}
+			try {
+				cfs.get(chatId).fillHtmlForm(user);
+			} catch (FailingHttpStatusCodeException | IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			cdState = ComplainDialogStates.COMPLAIN_SEND;
 			break;
 

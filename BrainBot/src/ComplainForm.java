@@ -1,3 +1,14 @@
+import java.io.IOException;
+import java.net.MalformedURLException;
+
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlForm;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlSelect;
+import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
+import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
 public class ComplainForm {
 	private String place;
@@ -58,8 +69,51 @@ public class ComplainForm {
 		this.message = message;
 	}
 	
-	public void fillHtmlForm() {
-		//Not implemented yet
+	public void fillHtmlForm(UserData user) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
+	    try (final WebClient webClient = new WebClient()) {
+
+	        // Get the first page
+	        final HtmlPage page1 = webClient.getPage("Ihre Beschwerde - RNV - Rhein-Neckar-Verkehr GmbH.html");
+
+	        // Get the form that we are dealing with and within that form, 
+	        // find the submit button and the field that we want to change.
+	        final HtmlForm form = page1.getFormByName("tx_spbettercontact_pi1-543[form]");
+
+	        final HtmlSubmitInput button = form.getInputByName("tx_spbettercontact_pi1-543[submit]");
+	        //user data
+	        HtmlTextInput textField = form.getInputByName("tx_spbettercontact_pi1-543[name]");
+	        textField.setValueAttribute(user.getLastName());
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[firstname]");
+	        textField.setValueAttribute(user.getFirstName());
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[street]");
+	        textField.setValueAttribute(user.getAddress());
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[city]");
+	        textField.setValueAttribute(user.getCity());
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[tel]");
+	        textField.setValueAttribute(user.getTel());
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[email]");
+	        textField.setValueAttribute(user.getMail());
+	        //complain data
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[location]");
+	        textField.setValueAttribute(place);
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[line]");
+	        textField.setValueAttribute(line);
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[direction]");
+	        textField.setValueAttribute(direction);
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[time]");
+	        textField.setValueAttribute(time);
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[date]");
+	        textField.setValueAttribute(date);
+	        textField = form.getInputByName("tx_spbettercontact_pi1-543[station]");
+	        textField.setValueAttribute(station);
+	        HtmlTextArea textArea = form.getTextAreaByName("tx_spbettercontact_pi1-543[message]");
+	        textArea.setText(message);
+	        HtmlSelect hs = form.getSelectByName("tx_spbettercontact_pi1-543[reason]");
+	        hs.setSelectedAttribute(reason, true);
+	       
+	        // Now submit the form by clicking the button and get back the second page.
+	        //final HtmlPage page2 = button.click();
+	    }
 	}
 	
 	
