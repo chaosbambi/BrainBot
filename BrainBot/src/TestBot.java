@@ -6,9 +6,14 @@ import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.api.methods.GetFile;
+import org.telegram.telegrambots.api.methods.StopMessageLiveLocation;
+import org.telegram.telegrambots.api.methods.send.SendChatAction;
+import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageLiveLocation;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.File;
+import org.telegram.telegrambots.api.objects.Location;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -30,6 +35,8 @@ public class TestBot extends TelegramLongPollingBot{
 				receiveText(update);
 			}else if(update.getMessage().getVoice() != null) {
 				saveVoice(update);
+			}else if(update.getMessage().hasLocation()) {
+				handleLocation(update);
 			}
 		}
 	}
@@ -96,6 +103,46 @@ public class TestBot extends TelegramLongPollingBot{
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	private void handleLocation(Update update) {
+		Location loc = update.getMessage().getLocation();
+		long cid = update.getMessage().getChatId();
+		float lat = loc.getLatitude();
+		float lon = loc.getLongitude();
+		int period = 100;
+		SendLocation sl = new SendLocation(lat, lon).setLivePeriod(period);
+		try {
+			execute(sl);
+		} catch (TelegramApiException e1) {
+			e1.printStackTrace();
+		}
+		Runnable updater = () -> {
+			float latitude = lat;
+			float longitude = lon;
+			for(int cnt = 0; cnt < period; cnt++) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				latitude += 0.0001;
+				longitude += 0.0001;
+				EditMessageLiveLocation emll = new EditMessageLiveLocation().setChatId(cid).setLatitude(latitude).setLongitud(longitude);
+				try {
+					execute(emll);
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+			}
+			StopMessageLiveLocation smll = new StopMessageLiveLocation().setChatId(cid);
+			try {
+				execute(smll);
+			} catch (TelegramApiException e) {
+				e.printStackTrace();
+			}
+		};
+		updater.run();
 	}
 
 }
