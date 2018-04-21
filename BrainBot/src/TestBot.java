@@ -86,8 +86,6 @@ public class TestBot extends TelegramLongPollingBot{
 					e.printStackTrace();
 				}
 				
-				wdState = WelcomeDialogStates.REQUESTED_LAST_NAME;
-				
 				processWelcomeDialog(update.getMessage());
 			}
 			
