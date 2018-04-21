@@ -361,6 +361,28 @@ public class TestBot extends TelegramLongPollingBot {
 			cfs.get(chatId).setPlace(text);
 			msgText = "Und welchem Grund lässt sich deine Beschwerde zuordnen? Bitte wähle aus:";
 			cdState = ComplainDialogStates.REQUESTED_REASON;
+			 KeyboardButton kb = null;
+			 ArrayList<KeyboardRow> rows = new ArrayList<>();
+			 KeyboardRow kr = new KeyboardRow();
+			 int i = 0;
+			 for(Reasons r : Reasons.values()) {
+				 System.out.println(r.getMessage());
+				 kb = new KeyboardButton(r.getMessage());
+				 kr.add(kb);
+				 i++;
+				 if(i%3 == 0) {
+					 rows.add(kr);
+					 kr = new KeyboardRow();
+				 }
+			 }
+			  
+			 ReplyKeyboardMarkup rkm = new
+			 ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+			  
+			  try {
+			  sendMsg.setChatId(chatId).setReplyMarkup(rkm).setText("Anfrage:"
+			  ); execute(sendMsg); } catch (TelegramApiException e) { e.printStackTrace();
+			  }
 			break;
 
 		case REQUESTED_REASON:
