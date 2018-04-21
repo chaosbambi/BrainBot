@@ -84,7 +84,7 @@ public class TestBot extends TelegramLongPollingBot {
 	 */
 	private void handleText(long chatId, String text) {
 		SendMessage sendMsg = new SendMessage().setChatId(chatId);
-		if (text.toLowerCase().trim().matches("ping[\\.!]*")) {
+		if (text.toLowerCase().trim().contains("ping")) {
 			sendMsg.setText("Pong!");
 			try {
 				execute(sendMsg);
@@ -96,7 +96,7 @@ public class TestBot extends TelegramLongPollingBot {
 			processWelcomeDialog(chatId, text);
 
 
-		} else if (text.equals("/start")) {
+		} else if (text.toLowerCase().trim().contains("start")) {
 			UserData newUser = null;
 			if(users.containsKey(chatId)){
 				//breche ab
@@ -127,7 +127,7 @@ public class TestBot extends TelegramLongPollingBot {
 
 			processComplainDialog(chatId, text);
 
-		} else if (text.equals("/complain")) {
+		} else if (text.toLowerCase().trim().contains("beschwer")) {
 
 			if (cdState == ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE) {
 				dState = DialogStates.ComplainDialog;
@@ -144,9 +144,9 @@ public class TestBot extends TelegramLongPollingBot {
 				processComplainDialog(chatId,text);
 			}
 
-		} else if (text.equals("/here")) {
+		} else if (text.toLowerCase().trim().contains("hier")) {
 			startLocationDialog(chatId,text);
-		} else if (text.equals("Nein, danke.")) {
+		} else if (text.toLowerCase().trim().contains("nein, danke")) {
 			sendMsg.setText("Schade. So ist es für mich schwieriger die nächste Haltestelle zu finden \u2639");
 			try {
 				execute(sendMsg);
@@ -179,6 +179,9 @@ public class TestBot extends TelegramLongPollingBot {
 		System.out.println("Name: " + cont.getFirstName() + " " + cont.getLastName()); // May contain null parts - in
 																						// User und Contact enthalten
 		System.out.println("Tel.: " + cont.getPhoneNumber());
+		if(wdState == wdState.REQUESTED_PHONE) {
+			processWelcomeDialog(update.getMessage().getChatId(),cont.getPhoneNumber());
+		}
 	}
 
 	/**
@@ -271,29 +274,40 @@ public class TestBot extends TelegramLongPollingBot {
 		case REQUESTED_FIRST_NAME:
 			users.get(chatId).setFirstName(text);
 
-			msgText = "Adresse";
+			msgText = "Um dich eindeutig zu identifizieren bräuchten wir außerdem bitte deine Adresse. Zuerst deine Straße mit Hausnummer:";
 			wdState = WelcomeDialogStates.REQUESTED_ADDRESS;
 			break;
 
 		case REQUESTED_ADDRESS:
 			users.get(chatId).setAddress(text);
 
-			msgText = "Ort";
+			msgText = "In welcher Stadt?";
 			wdState = WelcomeDialogStates.REQUESTED_CITY;
 			break;
 
 		case REQUESTED_CITY:
 			users.get(chatId).setCity(text);
 
-			msgText = "Telephonnummer";
+			 KeyboardButton kb = new KeyboardButton("Deinen Kontakt senden");
+			  kb.setRequestContact(true); KeyboardRow kr = new KeyboardRow(); kr.add(kb);
+			  ArrayList<KeyboardRow> rows = new ArrayList<>(); rows.add(kr);
+			 ReplyKeyboardMarkup rkm = new
+			 ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+			  
+			  try {
+			  sendMsg.setChatId(chatId).setReplyMarkup(rkm).setText("Anfrage:"
+			  ); execute(sendMsg); } catch (TelegramApiException e) { e.printStackTrace();
+			  }
+			msgText = "Eine schöne Gegend. Würdest du mir außerdem deine Telefonnummer geben?";
 			wdState = WelcomeDialogStates.REQUESTED_PHONE;
 			break;
 
+			
 		case REQUESTED_PHONE:
 
 			users.get(chatId).setTel(text);
 
-			msgText = "Email";
+			msgText = "Und zuletzt hätte ich gerne deine Email-Adresse.";
 			wdState = WelcomeDialogStates.REQUESTED_MAIL;
 			break;
 
@@ -308,7 +322,7 @@ public class TestBot extends TelegramLongPollingBot {
 			}else {
 				users.get(chatId).setMail(text);
 
-				msgText = "Vielen Dank";
+				msgText = "Vielen Dank. In Zukunft wirst du deine Daten nicht mehr eingeben müssen.";
 				dState = DialogStates.PendingForDialog;
 				wdState = WelcomeDialogStates.DialogFinished;
 				users.get(chatId).saveInDb();
@@ -327,19 +341,10 @@ public class TestBot extends TelegramLongPollingBot {
 			e.printStackTrace();
 		}
 
-		/*
-		 * KeyboardButton kb = new
-		 * KeyboardButton("Darf ich deine Telefonnummer haben?");
-		 * kb.setRequestContact(true); KeyboardRow kr = new KeyboardRow(); kr.add(kb);
-		 * ArrayList<KeyboardRow> rows = new ArrayList<>(); rows.add(kr);
-		 * ReplyKeyboardMarkup rkm = new
-		 * ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
-		 * 
-		 * try {
-		 * sendMsg.setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:"
-		 * ); execute(sendMsg); } catch (TelegramApiException e) { e.printStackTrace();
-		 * }
-		 */
+		
+		
+
+		 
 	
 	}
 
