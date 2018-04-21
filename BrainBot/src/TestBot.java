@@ -6,11 +6,8 @@ import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.api.methods.GetFile;
-import org.telegram.telegrambots.api.methods.StopMessageLiveLocation;
-import org.telegram.telegrambots.api.methods.send.SendChatAction;
 import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageLiveLocation;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.File;
 import org.telegram.telegrambots.api.objects.Location;
@@ -19,7 +16,6 @@ import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
-import org.telegram.telegrambots.exceptions.TelegramApiValidationException;
 
 public class TestBot extends TelegramLongPollingBot{
 
@@ -74,15 +70,20 @@ public class TestBot extends TelegramLongPollingBot{
 		SendMessage sendMsg = new SendMessage().setChatId(update.getMessage().getChatId());
 		if(update.getMessage().getText().toLowerCase().trim().matches("ping[\\.!]*")) {
 			sendMsg.setText("Pong!");
+			try {
+				execute(sendMsg);
+			} catch (TelegramApiException e) {
+				e.printStackTrace();
+			}
 		}else if(update.getMessage().getText().equals("/start")){
 			startWelcomeDialog(update.getMessage());
 		}else {
 			sendMsg.setText("Sorry, das habe ich nicht verstanden...");
-		}
-		try {
-			execute(sendMsg);
-		} catch (TelegramApiException e) {
-			e.printStackTrace();
+			try {
+				execute(sendMsg);
+			} catch (TelegramApiException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
