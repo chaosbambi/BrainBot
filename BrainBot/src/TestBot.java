@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.sound.sampled.UnsupportedAudioFileException;
+
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.api.methods.GetFile;
 import org.telegram.telegrambots.api.methods.send.SendLocation;
@@ -38,7 +40,15 @@ public class TestBot extends TelegramLongPollingBot{
 			if(update.getMessage().hasText()) {
 				receiveText(update);
 			}else if(update.getMessage().getVoice() != null) {
-				saveVoice(update);
+				VoiceProcessing vp;
+				try {
+					vp = new VoiceProcessing(saveVoice(update));
+					String message = vp.process();
+					System.out.println(message);
+				} catch (IOException | UnsupportedAudioFileException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}else if(update.getMessage().hasLocation()) {
 				locationTest(update);
 			}else if(update.getMessage().hasContact()) {
@@ -153,7 +163,8 @@ public class TestBot extends TelegramLongPollingBot{
 	 * Speichert eine empfangene Voice Nachricht als ogg datei
 	 * @param update Das Update-Objekt, was die Verarbeitung ausgelöst hat.
 	 */
-	private void saveVoice(Update update) {
+	private java.io.File saveVoice(Update update) {
+		java.io.File target = null;
 		String fileID = update.getMessage().getVoice().getFileId();
 		GetFile getfile = new GetFile().setFileId(fileID);
 		File tf;
@@ -171,13 +182,14 @@ public class TestBot extends TelegramLongPollingBot{
 			} catch (MalformedURLException e) {
 				e.printStackTrace();
 			}
-			java.io.File target = new java.io.File("voice/"+fileID+".ogg");
+			 target = new java.io.File("voice/"+fileID+".ogg");
 			try {
 				FileUtils.copyURLToFile(link, target, 1000, 2000);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
+		return target;
 	}
 	
 	/**
