@@ -70,7 +70,7 @@ public class TestBot extends TelegramLongPollingBot {
 					e1.printStackTrace();
 				}
 			} else if (update.getMessage().hasLocation()) {
-				locationTest(update);
+				handleLocation(update);
 			} else if (update.getMessage().hasContact()) {
 				handleContact(update);
 			}
@@ -196,7 +196,15 @@ public class TestBot extends TelegramLongPollingBot {
 		RNVApiHandler rna = new RNVApiHandler();
 		RNVHaltestelle closest = rna.getClosestStop(loc);
 		
+		SendMessage sendMsg = new SendMessage().setChatId(update.getMessage().getChatId());
+		sendMsg.setText("Nächste Haltestelle: " + closest.name);
 		
+		try {
+			execute(sendMsg);
+		} catch (TelegramApiException e) {
+			System.err.println("Fehler beim Senden der Nachricht: ");
+			e.printStackTrace();
+		}
 		// Maybe other maps? List of Map.Entry? Will need to be sorted!
 		// Query possible Stops, put them in "stops"
 		// Sort by distance
