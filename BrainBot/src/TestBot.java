@@ -62,6 +62,7 @@ public class TestBot extends TelegramLongPollingBot {
 					vp = new VoiceProcessing(handleVoice(update));
 					Gson gson = new GsonBuilder().create(); 
 					VoiceResponse vr = gson.fromJson(vp.process(), VoiceResponse.class);
+					System.out.println(vr.getDisplayText());
 					handleText(update.getMessage().getChatId(), vr.getDisplayText());
 					
 				} catch (IOException | UnsupportedAudioFileException e1) {
