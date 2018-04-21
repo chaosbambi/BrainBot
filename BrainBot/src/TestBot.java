@@ -72,11 +72,11 @@ public class TestBot extends TelegramLongPollingBot{
 		}else {
 			sendMsg.setText("Sorry, das habe ich nicht verstanden...");
 		}
-		/*try {
+		try {
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
-		}*/
+		}
 	}
 	
 	/**
