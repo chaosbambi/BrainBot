@@ -2,3 +2,10 @@
 /Main.class
 /TestBot.class
 /Sensitive.class
+/ComplainDialogStates.class
+/SpeechAPI$Language.class
+/SpeechAPI$OutputFormat.class
+/SpeechAPI$RecognitionMode.class
+/SpeechAPI.class
+/SpeechToTextREST.class
+/VoiceProcessing.class
