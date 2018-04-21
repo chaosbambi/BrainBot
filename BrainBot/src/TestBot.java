@@ -140,6 +140,7 @@ public class TestBot extends TelegramLongPollingBot {
 					e.printStackTrace();
 				}
 
+				cdState = ComplainDialogStates.COMPLAIN_DIALOG_STARTED;
 				processComplainDialog(chatId,text);
 			}
 
@@ -425,6 +426,14 @@ public class TestBot extends TelegramLongPollingBot {
 
 		default:
 			break;
+		}
+		
+
+		sendMsg.setText(msgText);
+		try {
+			execute(sendMsg);
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
 		}
 	}
 

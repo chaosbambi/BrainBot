@@ -73,13 +73,12 @@ public class ComplainForm {
 	    try (final WebClient webClient = new WebClient()) {
 
 	        // Get the first page
-	        final HtmlPage page1 = webClient.getPage("Ihre Beschwerde - RNV - Rhein-Neckar-Verkehr GmbH.html");
+	        final HtmlPage page1 = webClient.getPage("file:src\\form1.html");
 
 	        // Get the form that we are dealing with and within that form, 
 	        // find the submit button and the field that we want to change.
 	        final HtmlForm form = page1.getFormByName("tx_spbettercontact_pi1-543[form]");
 
-	        final HtmlSubmitInput button = form.getInputByName("tx_spbettercontact_pi1-543[submit]");
 	        //user data
 	        HtmlTextInput textField = form.getInputByName("tx_spbettercontact_pi1-543[name]");
 	        textField.setValueAttribute(user.getLastName());
@@ -107,7 +106,7 @@ public class ComplainForm {
 	        textField = form.getInputByName("tx_spbettercontact_pi1-543[station]");
 	        textField.setValueAttribute(station);
 	        HtmlTextArea textArea = form.getTextAreaByName("tx_spbettercontact_pi1-543[message]");
-	        textArea.setText(message);
+	        textArea.type(message);
 	        HtmlSelect hs = form.getSelectByName("tx_spbettercontact_pi1-543[reason]");
 	        hs.setSelectedAttribute(reason, true);
 	       
