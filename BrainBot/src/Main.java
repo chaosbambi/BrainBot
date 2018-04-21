@@ -7,6 +7,9 @@ public class Main {
 	public static void main(String[] args) {
 		System.out.println("Starting Bot.");
 		
+		RNVApiHandler r = new RNVApiHandler();
+		r.getData("/regions/rnv/modules/stations/packages/1");
+		
 		//Initialize Api Context
 		ApiContextInitializer.init();
 
