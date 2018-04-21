@@ -31,14 +31,19 @@ public class TestBot extends TelegramLongPollingBot{
 	}
 
 	@Override
+	public String getBotToken() {
+		return Sensitive.getKey();
+	}
+
+	@Override
 	public void onUpdateReceived(Update update) {
 
 
 		if(update.hasMessage()) {
 			if(update.getMessage().hasText()) {
-				receiveText(update);
+				handleText(update);
 			}else if(update.getMessage().getVoice() != null) {
-				saveVoice(update);
+				handleVoice(update);
 			}else if(update.getMessage().hasLocation()) {
 				locationTest(update);
 			}else if(update.getMessage().hasContact()) {
@@ -48,54 +53,10 @@ public class TestBot extends TelegramLongPollingBot{
 	}
 
 	/**
-	 * Prints received contact information to console.
-	 * Can later handle database entry management.
-	 * @param update The Update that contained the message with the contact info
-	 */
-	private void handleContact(Update update) {
-		User sender = update.getMessage().getFrom();
-		Contact cont = update.getMessage().getContact();
-		System.out.println("Daten Erhalten:");
-		System.out.println("User ID: " + sender.getId()); //In User und Contact enthalten
-		System.out.println("Username: " + sender.getUserName());	//May be Null
-		System.out.println("Name: " + cont.getFirstName() + " " + cont.getLastName());	//May contain null parts - in User und Contact enthalten
-		System.out.println("Tel.: " + cont.getPhoneNumber());
-	}
-
-	/*
-	 * This method gathers the personal information from the User
-	 * @param message The Message that requested the start dialogue
-	 */
-	private void startWelcomeDialog(Message message) {
-		User maybeAdmin = message.getFrom();
-		KeyboardButton kb = new KeyboardButton("Darf ich deine Telefonnummer haben?");
-		kb.setRequestContact(true);
-		KeyboardRow kr = new KeyboardRow();
-		kr.add(kb);
-		ArrayList<KeyboardRow> rows = new ArrayList<>();
-		rows.add(kr);
-		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
-		
-		try {
-			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:");
-			execute(sendMsg);
-		} catch (TelegramApiException e) {
-			e.printStackTrace();
-		}
-		
-		System.out.println(maybeAdmin.getId());
-	}
-
-	@Override
-	public String getBotToken() {
-		return Sensitive.getKey();
-	}
-	
-	/**
 	 * Receives text based messages.
 	 * @param update The Update object that triggered the evaluation
 	 */
-	private void receiveText(Update update) {
+	private void handleText(Update update) {
 		SendMessage sendMsg = new SendMessage().setChatId(update.getMessage().getChatId());
 		if(update.getMessage().getText().toLowerCase().trim().matches("ping[\\.!]*")) {
 			sendMsg.setText("Pong!");
@@ -124,36 +85,53 @@ public class TestBot extends TelegramLongPollingBot{
 			}
 		}
 	}
-	
+
 	/**
-	 * Starts the user dialogue requesting a location share.
-	 * @param message Message that requested a location evaluation
+	 * Prints received contact information to console.
+	 * Can later handle database entry management.
+	 * @param update The Update that contained the message with the contact info
 	 */
-	private void startLocationDialog(Message message) {
-		KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
-		KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
-		kbLoc.setRequestLocation(true);
-		KeyboardRow kr = new KeyboardRow();
-		kr.add(kbLoc);
-		kr.add(kbNo);
-		ArrayList<KeyboardRow> rows = new ArrayList<>();
-		rows.add(kr);
-		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
-				
-		try {
-			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId()).setText("Möchtest du deinen Standort angeben?").setReplyMarkup(rkm);
-			execute(sendMsg);
-		} catch (TelegramApiException e) {
-			System.err.println("No message sent:");
-			e.printStackTrace();
+	private void handleContact(Update update) {
+		User sender = update.getMessage().getFrom();
+		Contact cont = update.getMessage().getContact();
+		System.out.println("Daten Erhalten:");
+		System.out.println("User ID: " + sender.getId()); //In User und Contact enthalten
+		System.out.println("Username: " + sender.getUserName());	//May be Null
+		System.out.println("Name: " + cont.getFirstName() + " " + cont.getLastName());	//May contain null parts - in User und Contact enthalten
+		System.out.println("Tel.: " + cont.getPhoneNumber());
+	}
+
+	/**
+	 * Proper location handling
+	 * TODO
+	 * @param update
+	 */
+	private void handleLocation(Update update) {
+		Location loc = update.getMessage().getLocation();
+		HashMap<String, Location> stops = new HashMap<>();
+		HashMap<String, Double> distances = new HashMap<>();
+		//Maybe other maps? List of Map.Entry? Will need to be sorted!
+		//Query possible Stops, put them in "stops"
+		while(stops.entrySet().iterator().hasNext()) {
+			Map.Entry<String, Location> kvpair = stops.entrySet().iterator().next();
+			distances.put(kvpair.getKey(), Math.pow(kvpair.getValue().getLatitude() - loc.getLatitude(), 2.0)+Math.pow(kvpair.getValue().getLongitude() - loc.getLongitude(), 2.0));
 		}
+		//Sort by distance
+		//Select stop with lowest distance
+		//Runtime: O(way too much)
+		/*
+		 * This is only a basic concept for finding the closest possible stop.
+		 * More advanced systems like travel time vs stop distance calculation would require a more refined algorithm.
+		 */
+		
+		
 	}
 
 	/**
 	 * Speichert eine empfangene Voice Nachricht als ogg datei
 	 * @param update Das Update-Objekt, was die Verarbeitung ausgelöst hat.
 	 */
-	private void saveVoice(Update update) {
+	private void handleVoice(Update update) {
 		String fileID = update.getMessage().getVoice().getFileId();
 		GetFile getfile = new GetFile().setFileId(fileID);
 		File tf;
@@ -179,7 +157,55 @@ public class TestBot extends TelegramLongPollingBot{
 			}
 		}
 	}
-	
+
+	/*
+	 * This method gathers the personal information from the User
+	 * @param message The Message that requested the start dialogue
+	 */
+	private void startWelcomeDialog(Message message) {
+		User maybeAdmin = message.getFrom();
+		KeyboardButton kb = new KeyboardButton("Darf ich deine Telefonnummer haben?");
+		kb.setRequestContact(true);
+		KeyboardRow kr = new KeyboardRow();
+		kr.add(kb);
+		ArrayList<KeyboardRow> rows = new ArrayList<>();
+		rows.add(kr);
+		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+		
+		try {
+			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:");
+			execute(sendMsg);
+		} catch (TelegramApiException e) {
+			e.printStackTrace();
+		}
+		
+		System.out.println(maybeAdmin.getId());
+	}
+
+	/**
+	 * Starts the user dialogue requesting a location share.
+	 * @param message Message that requested a location evaluation
+	 */
+	private void startLocationDialog(Message message) {
+		KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
+		KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
+		kbLoc.setRequestLocation(true);
+		KeyboardRow kr = new KeyboardRow();
+		kr.add(kbLoc);
+		kr.add(kbNo);
+		ArrayList<KeyboardRow> rows = new ArrayList<>();
+		rows.add(kr);
+		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+				
+		try {
+			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId()).setText("Möchtest du deinen Standort angeben?").setReplyMarkup(rkm);
+			execute(sendMsg);
+		} catch (TelegramApiException e) {
+			System.err.println("No message sent:");
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * Location handling proof of concept
 	 * A received location gets mirrored and then moves with live updates
@@ -202,32 +228,6 @@ public class TestBot extends TelegramLongPollingBot{
 			Thread updater = new Thread(new LocationUpdater(sent.getMessageId(), cid, sl, this));
 			updater.start();
 		}
-	}
-	
-	/**
-	 * Proper location handling
-	 * TODO
-	 * @param update
-	 */
-	private void handleLocation(Update update) {
-		Location loc = update.getMessage().getLocation();
-		HashMap<String, Location> stops = new HashMap<>();
-		HashMap<String, Double> distances = new HashMap<>();
-		//Maybe other maps? List of Map.Entry? Will need to be sorted!
-		//Query possible Stops, put them in "stops"
-		while(stops.entrySet().iterator().hasNext()) {
-			Map.Entry<String, Location> kvpair = stops.entrySet().iterator().next();
-			distances.put(kvpair.getKey(), Math.pow(kvpair.getValue().getLatitude() - loc.getLatitude(), 2.0)+Math.pow(kvpair.getValue().getLongitude() - loc.getLongitude(), 2.0));
-		}
-		//Sort by distance
-		//Select stop with lowest distance
-		//Runtime: O(way too much)
-		/*
-		 * This is only a basic concept for finding the closest possible stop.
-		 * More advanced systems like travel time vs stop distance calculation would require a more refined algorithm.
-		 */
-		
-		
 	}
 
 }
