@@ -6,9 +6,14 @@ import java.net.URL;
 
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.api.methods.GetFile;
+import org.telegram.telegrambots.api.methods.StopMessageLiveLocation;
+import org.telegram.telegrambots.api.methods.send.SendChatAction;
+import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageLiveLocation;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.File;
+import org.telegram.telegrambots.api.objects.Location;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
@@ -32,6 +37,8 @@ public class TestBot extends TelegramLongPollingBot{
 				receiveText(update);
 			}else if(update.getMessage().getVoice() != null) {
 				saveVoice(update);
+			}else if(update.getMessage().hasLocation()) {
+				handleLocation(update);
 			}
 		}
 	}
@@ -107,6 +114,30 @@ public class TestBot extends TelegramLongPollingBot{
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+		}
+	}
+	
+	/**
+	 * Location handling proof of concept
+	 * A received location gets mirrored and then moves with live updates
+	 * @param update The Update-Object that triggered message processing
+	 */
+	private void handleLocation(Update update) {
+		Location loc = update.getMessage().getLocation();
+		long cid = update.getMessage().getChatId();
+		float lat = loc.getLatitude();
+		float lon = loc.getLongitude();
+		int period = 64;
+		SendLocation sl = new SendLocation(lat, lon).setLivePeriod(period).setChatId(cid);
+		Message sent = null;
+		try {
+			sent = execute(sl);
+		} catch (TelegramApiException e1) {
+			e1.printStackTrace();
+		}
+		if(sent != null) {
+			Thread updater = new Thread(new LocationUpdater(sent.getMessageId(), cid, sl, this));
+			updater.run();
 		}
 	}
 
