@@ -3,17 +3,22 @@
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.api.methods.GetFile;
 import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
+import org.telegram.telegrambots.api.objects.Contact;
 import org.telegram.telegrambots.api.objects.File;
 import org.telegram.telegrambots.api.objects.Location;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.User;
+import org.telegram.telegrambots.api.objects.replykeyboard.ForceReplyKeyboard;
+import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
@@ -35,8 +40,25 @@ public class TestBot extends TelegramLongPollingBot{
 				saveVoice(update);
 			}else if(update.getMessage().hasLocation()) {
 				handleLocation(update);
+			}else if(update.getMessage().hasContact()) {
+				handleContact(update);
 			}
 		}
+	}
+
+	/**
+	 * Prints received contact information to console.
+	 * Can later handle database entry management.
+	 * @param update The Update that contained the message with the contact info
+	 */
+	private void handleContact(Update update) {
+		User sender = update.getMessage().getFrom();
+		Contact cont = update.getMessage().getContact();
+		System.out.println("Daten Erhalten:");
+		System.out.println("User ID: " + sender.getId());
+		System.out.println("Username: " + sender.getUserName());	//May be Null
+		System.out.println("Name: " + cont.getFirstName() + " " + cont.getLastName());	//May contain null parts
+		System.out.println("Tel.: " + cont.getPhoneNumber());
 	}
 
 	/*
@@ -46,9 +68,14 @@ public class TestBot extends TelegramLongPollingBot{
 		User maybeAdmin = message.getFrom();
 		KeyboardButton kb = new KeyboardButton("Darf ich deine Telefonnummer haben?");
 		kb.setRequestContact(true);
+		KeyboardRow kr = new KeyboardRow();
+		kr.add(kb);
+		ArrayList<KeyboardRow> rows = new ArrayList<>();
+		rows.add(kr);
+		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+		
 		try {
-			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId());
-			sendMsg.setText("Test");
+			SendMessage sendMsg = new SendMessage().setChatId(message.getChatId()).setReplyMarkup(rkm).setText("Anfrage:");
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
