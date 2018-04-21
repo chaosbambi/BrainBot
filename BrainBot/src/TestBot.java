@@ -320,7 +320,7 @@ public class TestBot extends TelegramLongPollingBot {
 			}else {
 				users.get(chatId).setMail(text);
 
-				msgText = "Vielen Dank. In Zukunft wirst du deine Daten nicht mehr eingeben müssen.";
+				msgText = "Vielen Dank. In Zukunft wirst du deine Daten nicht noch einmal eingeben müssen.";
 				dState = DialogStates.PendingForDialog;
 				wdState = WelcomeDialogStates.DialogFinished;
 				users.get(chatId).saveInDb();
@@ -353,49 +353,49 @@ public class TestBot extends TelegramLongPollingBot {
 		switch (cdState) {
 		case COMPLAIN_DIALOG_STARTED:
 			cfs.put(chatId,new ComplainForm());
-			msgText = "Ort:";
+			msgText = "Welchen Ort betrifft deine Beschwerde?";
 			cdState = ComplainDialogStates.REQUESTED_PLACE;
 			break;
 
 		case REQUESTED_PLACE:
 			cfs.get(chatId).setPlace(text);
-			msgText = "Grund:";
+			msgText = "Und welchem Grund lässt sich deine Beschwerde zuordnen? Bitte wähle aus:";
 			cdState = ComplainDialogStates.REQUESTED_REASON;
 			break;
 
 		case REQUESTED_REASON:
 			cfs.get(chatId).setReason(text);
-			msgText = "Linie:";
+			msgText = "Welche Linie betrifft deine Meldung?";
 			cdState = ComplainDialogStates.REQUESTED_LINE;
 			break;
 
 		case REQUESTED_LINE:
 			cfs.get(chatId).setLine(text);
-			msgText = "Richtung:";
+			msgText = "In welche Richtung?";
 			cdState = ComplainDialogStates.REQUESTED_DIRECTION;
 			break;
 
 		case REQUESTED_DIRECTION:
 			cfs.get(chatId).setDirection(text);
-			msgText = "Uhrzeit:";
+			msgText = "Um wie viel Uhr ist der Mangel aufgetreten?";
 			cdState = ComplainDialogStates.REQUESTED_TIME;
 			break;
 
 		case REQUESTED_TIME:
 			cfs.get(chatId).setTime(text);
-			msgText = "Datum:";
+			msgText = "Und an welchem Datum?";
 			cdState = ComplainDialogStates.REQUESTED_DATE;
 			break;
 
 		case REQUESTED_DATE:
 			cfs.get(chatId).setDate(text);
-			msgText = "Haltestelle:";
+			msgText = "Welche Haltestelle ist betroffen gewesen?";
 			cdState = ComplainDialogStates.REQUESTED_STATION;
 			break;
 
 		case REQUESTED_STATION:
 			cfs.get(chatId).setStation(text);
-			msgText = "Nachricht:";
+			msgText = "Es tut uns leid, dass nicht alles zu deiner Zufriedenheit gelaufen ist. Bitte hinterlasse uns eine Nachricht.";
 			cdState = ComplainDialogStates.REQUESTED_MESSAGE;
 			break;
 
