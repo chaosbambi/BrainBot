@@ -133,7 +133,7 @@ public class UserData {
                 ResultSet rs = query.executeQuery();
                 userExists = rs.next();
                 if(userExists) {
-                	UserData newUser = new UserData(chatId);
+                	newUser = new UserData(chatId);
                 	newUser.setLastName(rs.getString("LASTNAME"));
                 	newUser.setFirstName(rs.getString("FIRSTNAME"));
                 	newUser.setAddress(rs.getString("ADDRESS"));
