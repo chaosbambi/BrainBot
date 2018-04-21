@@ -499,47 +499,53 @@ public class TestBot extends TelegramLongPollingBot {
 
 		switch(ldState) {
 		case LOCATION_DIALOG_STARTED:
-			msgText = "Ziel:";
+			msgText = "Bitte teile mir deine Zielhaltestelle mit:";
 			ldState = LocationDialogStates.DESTINATION_REQUESTED;
 			break;
 			
 		case DESTINATION_REQUESTED:
-			msgText = "Herkunft:";
+			msgText = "Wenn du mir deinen Standort mitteilst, werde ich die di nächste Haltestelle bestimmen.";
 			ldState = LocationDialogStates.STARTINGPOINT_REQUESTED;
+			KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
+			KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
+			kbLoc.setRequestLocation(true);
+			KeyboardRow kr = new KeyboardRow();
+			kr.add(kbLoc);
+			kr.add(kbNo);
+			ArrayList<KeyboardRow> rows = new ArrayList<>();
+			rows.add(kr);
+			ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
 			break;
 			
 		case STARTINGPOINT_REQUESTED:
-			msgText = "Berechne Verbindung";
+			msgText = "Ich suche eine Verbindung für dich.";
 			ldState = LocationDialogStates.CONNECTION_SUGGESTED;
 			break;
 			
 		case CONNECTION_SUGGESTED:
-			msgText = "Gute Fahrt.";
+			msgText = "Gute Fahrt. Möchtest du direkt ein Ticket erwerben?";
 			ldState = LocationDialogStates.NO_REQUEST_PENDING;
+			KeyboardButton kbYes = new KeyboardButton("Ja, bitte");
+			KeyboardButton kbNope = new KeyboardButton("Nein, danke.");
+			KeyboardRow krow = new KeyboardRow();
+			krow.add(kbYes);
+			krow.add(kbNope);
+			ArrayList<KeyboardRow> krows = new ArrayList<>();
+			krows.add(krow);
+			ReplyKeyboardMarkup rkmu = new ReplyKeyboardMarkup().setKeyboard(krows).setOneTimeKeyboard(true);
 			break;
-			
 		default:
 			break;		
 		}
-		
-		KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
-		KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
-		kbLoc.setRequestLocation(true);
-		KeyboardRow kr = new KeyboardRow();
-		kr.add(kbLoc);
-		kr.add(kbNo);
-		ArrayList<KeyboardRow> rows = new ArrayList<>();
-		rows.add(kr);
-		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
 
+
+		sendMsg.setText(msgText);
 		try {
-			sendMsg.setChatId(chatId)
-					.setText("Möchtest du deinen Standort angeben?").setReplyMarkup(rkm);
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
-			System.err.println("No message sent:");
 			e.printStackTrace();
 		}
+	
 	}
 
 	/**
