@@ -34,12 +34,13 @@ public class TestBot extends TelegramLongPollingBot {
 
 	private DialogStates dState = DialogStates.PendingForDialog;
 	private WelcomeDialogStates wdState = WelcomeDialogStates.DialogUnfinished;
-
+	private ComplainDialogStates cdState = ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE;
+	private LocationDialogStates ldState = LocationDialogStates.NO_REQUEST_PENDING;
+	
 	private HashMap<Long,UserData> users = new HashMap<>();
 	private HashMap<Long,ComplainForm> cfs = new HashMap<>();
 	
-	private ComplainDialogStates cdState = ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE;
-
+	
 	@Override
 	public String getBotUsername() {
 		return "BrainBot Test";
@@ -148,10 +149,25 @@ public class TestBot extends TelegramLongPollingBot {
 		} else if (dState == DialogStates.LocationDialog) {
 
 			processComplainDialog(chatId, text);
-
 		 
 		}else if (text.toLowerCase().trim().contains("hier")) {
-			processLocationDialog(chatId,text);
+			
+			if (ldState == LocationDialogStates.NO_REQUEST_PENDING) {
+				dState = DialogStates.LocationDialog;
+
+				sendMsg.setText("Alles klar, gerne schlage ich dir eine Verbindung vor.");
+
+				try {
+					execute(sendMsg);
+				} catch (TelegramApiException e) {
+					e.printStackTrace();
+				}
+
+				ldState = LocationDialogStates.LOCATION_DIALOG_STARTED;
+				processLocationDialog(chatId, text);
+			}
+
+		
 		} else if (text.toLowerCase().trim().contains("nein, danke")) {
 			sendMsg.setText("Schade. So ist es für mich schwieriger die nächste Haltestelle zu finden \u2639");
 			try {
@@ -478,6 +494,34 @@ public class TestBot extends TelegramLongPollingBot {
 	 *            Message that requested a location evaluation
 	 */
 	private void processLocationDialog(long chatId, String text) {
+		SendMessage sendMsg = new SendMessage().setChatId(chatId);
+		String msgText = "Ups, da ist wohl ein Fehler aufgetreten.";
+
+		switch(ldState) {
+		case LOCATION_DIALOG_STARTED:
+			msgText = "Ziel:";
+			ldState = LocationDialogStates.DESTINATION_REQUESTED;
+			break;
+			
+		case DESTINATION_REQUESTED:
+			msgText = "Herkunft:";
+			ldState = LocationDialogStates.STARTINGPOINT_REQUESTED;
+			break;
+			
+		case STARTINGPOINT_REQUESTED:
+			msgText = "Berechne Verbindung";
+			ldState = LocationDialogStates.CONNECTION_SUGGESTED;
+			break;
+			
+		case CONNECTION_SUGGESTED:
+			msgText = "Gute Fahrt.";
+			ldState = LocationDialogStates.NO_REQUEST_PENDING;
+			break;
+			
+		default:
+			break;		
+		}
+		
 		KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
 		KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
 		kbLoc.setRequestLocation(true);
@@ -489,7 +533,7 @@ public class TestBot extends TelegramLongPollingBot {
 		ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
 
 		try {
-			SendMessage sendMsg = new SendMessage().setChatId(chatId)
+			sendMsg.setChatId(chatId)
 					.setText("Möchtest du deinen Standort angeben?").setReplyMarkup(rkm);
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
