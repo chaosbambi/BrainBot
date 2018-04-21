@@ -95,7 +95,7 @@ public class RNVApiHandler {
 		System.out.println(reqString);
 		jsonString = getHttpStream(reqString, false);
 		Type datType = new TypeToken<Map<String,RNVHaltestelle>>(){private static final long serialVersionUID = 1L;}.getType();
-		this.haltestellen = gson.fromJson(jsonString, datType);
+		RNVApiHandler.haltestellen = gson.fromJson(jsonString, datType);
 		
 		/*
 		 * 			for(String s: haltestellen.keySet()){
@@ -107,7 +107,7 @@ public class RNVApiHandler {
 	public RNVHaltestelle getClosestStop(Location loc) {
 		HashMap<String, Double> distances = new HashMap<>();
 		for(String s1: haltestellen.keySet()){
-			for(RNVHaltestellenStop rhs : this.haltestellen.get(s1).stops) {
+			for(RNVHaltestellenStop rhs : RNVApiHandler.haltestellen.get(s1).stops) {
 				distances.put(s1, Math.pow(rhs.lat - loc.getLatitude(), 2.0) + Math.pow(rhs.lon - loc.getLongitude(), 2.0));
 			}
 		}
@@ -120,7 +120,7 @@ public class RNVApiHandler {
 			}
 		}
 		if(busStop != null && !busStop.isEmpty()) {
-			return this.haltestellen.get(busStop);
+			return RNVApiHandler.haltestellen.get(busStop);
 		}else {
 			return null;
 		}
