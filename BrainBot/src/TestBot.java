@@ -105,44 +105,28 @@ public class TestBot extends TelegramLongPollingBot{
 		}
 	}
 	
+	/**
+	 * Location handling proof of concept
+	 * A received location gets mirrored and then moves with live updates
+	 * @param update The Update-Object that triggered message processing
+	 */
 	private void handleLocation(Update update) {
 		Location loc = update.getMessage().getLocation();
 		long cid = update.getMessage().getChatId();
 		float lat = loc.getLatitude();
 		float lon = loc.getLongitude();
-		int period = 100;
-		SendLocation sl = new SendLocation(lat, lon).setLivePeriod(period);
+		int period = 64;
+		SendLocation sl = new SendLocation(lat, lon).setLivePeriod(period).setChatId(cid);
+		Message sent = null;
 		try {
-			execute(sl);
+			sent = execute(sl);
 		} catch (TelegramApiException e1) {
 			e1.printStackTrace();
 		}
-		Runnable updater = () -> {
-			float latitude = lat;
-			float longitude = lon;
-			for(int cnt = 0; cnt < period; cnt++) {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				latitude += 0.0001;
-				longitude += 0.0001;
-				EditMessageLiveLocation emll = new EditMessageLiveLocation().setChatId(cid).setLatitude(latitude).setLongitud(longitude);
-				try {
-					execute(emll);
-				} catch (TelegramApiException e) {
-					e.printStackTrace();
-				}
-			}
-			StopMessageLiveLocation smll = new StopMessageLiveLocation().setChatId(cid);
-			try {
-				execute(smll);
-			} catch (TelegramApiException e) {
-				e.printStackTrace();
-			}
-		};
-		updater.run();
+		if(sent != null) {
+			Thread updater = new Thread(new LocationUpdater(sent.getMessageId(), cid, sl, this));
+			updater.run();
+		}
 	}
 
 }
