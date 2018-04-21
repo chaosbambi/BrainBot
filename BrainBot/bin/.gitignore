@@ -2,8 +2,3 @@
 /Main.class
 /TestBot.class
 /Sensitive.class
-/.gitignore
-/DialogStates.class
-/LocationUpdater.class
-/WelcomeDialogStates.class
-/ComplainDialogStates.class
