@@ -127,7 +127,7 @@ public class TestBot extends TelegramLongPollingBot {
 
 			processComplainDialog(chatId, text);
 
-		} else if (text.toLowerCase().trim().contains("beschwer")) {
+		} else if (text.equals("/complain") || text.toLowerCase().trim().contains("beschwer")) {
 
 			if (cdState == ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE) {
 				dState = DialogStates.ComplainDialog;
