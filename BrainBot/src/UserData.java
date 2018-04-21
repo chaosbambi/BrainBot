@@ -115,9 +115,10 @@ public class UserData {
 		
 	}
 
-	static boolean checkForUser(Long chatId) {
+	static UserData checkForUser(Long chatId) {
 		String url = String.format("jdbc:sqlserver://%s:1433;database=%s;user=%s;password=%s;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30;", hostName, dbServer, dbUser, dbPw);
         Connection connection = null;
+        UserData newUser = null;
         boolean userExists = false;
         try {
                 connection = DriverManager.getConnection(url);
@@ -126,11 +127,21 @@ public class UserData {
 
 
                 // Create and execute a SELECT SQL statement.
-                PreparedStatement query = connection.prepareStatement("SELECT LASTNAME FROM Users WHERE PERSONID = ?");
+                PreparedStatement query = connection.prepareStatement("SELECT * FROM Users WHERE PERSONID = ?");
                 query.setString(1, chatId.toString());
 
                 ResultSet rs = query.executeQuery();
                 userExists = rs.next();
+                if(userExists) {
+                	UserData newUser = new UserData(chatId);
+                	newUser.setLastName(rs.getString("LASTNAME"));
+                	newUser.setFirstName(rs.getString("FIRSTNAME"));
+                	newUser.setAddress(rs.getString("ADDRESS"));
+                	newUser.setCity(rs.getString("CITY"));
+                	newUser.setTel(rs.getString("PHONE"));
+                	newUser.setMail(rs.getString("MAIL"));
+                			
+                }
                 connection.close();
                       
                 }
@@ -147,7 +158,7 @@ public class UserData {
 						}
                 	}
                 }
-        return userExists;
+        return newUser;
 	}
 	
 	

@@ -91,13 +91,17 @@ public class TestBot extends TelegramLongPollingBot {
 
 
 		} else if (update.getMessage().getText().equals("/start")) {
-
+			UserData newUser = null;
 			if(users.containsKey(update.getMessage().getChatId())){
 				//breche ab
-			} else if(UserData.checkForUser(update.getMessage().getChatId())) {
-				users.put(update.getMessage().getChatId(),null);
-				//breche ab
+			} else {
+				newUser = UserData.checkForUser(update.getMessage().getChatId());
+				if( newUser != null) {
+					users.put(update.getMessage().getChatId(),newUser);
+					//breche ab
+				}
 			}
+			
 			if (wdState == WelcomeDialogStates.DialogUnfinished) {
 				dState = DialogStates.WelcomeDialog;
 
