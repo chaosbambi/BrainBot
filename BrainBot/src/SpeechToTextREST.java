@@ -19,15 +19,17 @@ public class SpeechToTextREST {
   private static final String REQUEST_URI = "https://speech.platform.bing.com/speech/recognition/%s/cognitiveservices/v1";
   private static final String PARAMETERS = "language=%s&format=%s";
 
-  private static final String token = Sensitive.getToken();
   
   private SpeechAPI.RecognitionMode mode = SpeechAPI.RecognitionMode.Interactive;
-  private SpeechAPI.Language language = SpeechAPI.Language.en_US;
+  private SpeechAPI.Language language = SpeechAPI.Language.de_DE;
   private SpeechAPI.OutputFormat format = SpeechAPI.OutputFormat.Simple;
 
+  private final Authentication auth;
 
-  public SpeechToTextREST(){
+  public SpeechToTextREST(Authentication auth){
+    this.auth = auth;
   }
+
 
   public SpeechAPI.RecognitionMode getMode() {
     return mode;
@@ -64,9 +66,9 @@ public class SpeechToTextREST {
     connection.setDoInput(true);
     connection.setDoOutput(true); 
     connection.setRequestMethod("POST");
-    connection.setRequestProperty("Content-type", "audio/wav; codec=\"audio/pcm\"; samplerate=16000");
+    connection.setRequestProperty("Content-type", "audio/wav; codec=audio/pcm; samplerate=16000");
     connection.setRequestProperty("Accept", "application/json;text/xml");
-    connection.setRequestProperty("Authorization", "Bearer " + token);
+    connection.setRequestProperty("Authorization", "Bearer " + auth.getToken());
     connection.setChunkedStreamingMode(0); // 0 == default chunk size
     connection.connect();
 
