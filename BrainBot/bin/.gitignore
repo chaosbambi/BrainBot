@@ -1,4 +1,12 @@
 /Sensitive.java
 /Main.class
 /TestBot.class
+<<<<<<< HEAD
 /Sensitive.class
+=======
+/Sensitive.class
+/.gitignore
+/DialogStates.class
+/LocationUpdater.class
+/WelcomeDialogStates.class
+>>>>>>> branch 'master' of https://github.com/chaosbambi/BrainBot.git
