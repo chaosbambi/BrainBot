@@ -84,7 +84,7 @@ public class TestBot extends TelegramLongPollingBot {
 	 */
 	private void handleText(long chatId, String text) {
 		SendMessage sendMsg = new SendMessage().setChatId(chatId);
-		if (text.toLowerCase().trim().contains("ping")) {
+		if (text.toLowerCase().trim().equals("ping")) {
 			sendMsg.setText("Pong!");
 			try {
 				execute(sendMsg);
@@ -144,8 +144,13 @@ public class TestBot extends TelegramLongPollingBot {
 				processComplainDialog(chatId,text);
 			}
 
-		} else if (text.toLowerCase().trim().contains("hier")) {
-			startLocationDialog(chatId,text);
+		} else if (dState == DialogStates.LocationDialog) {
+
+			processComplainDialog(chatId, text);
+
+		 
+		}else if (text.toLowerCase().trim().contains("hier")) {
+			processLocationDialog(chatId,text);
 		} else if (text.toLowerCase().trim().contains("nein, danke")) {
 			sendMsg.setText("Schade. So ist es für mich schwieriger die nächste Haltestelle zu finden \u2639");
 			try {
@@ -337,15 +342,10 @@ public class TestBot extends TelegramLongPollingBot {
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			e.printStackTrace();
-		}
-
-		
-		
-
-		 
-	
+		}	
 	}
 
+	
 	private void processComplainDialog(long chatId, String text) {
 		SendMessage sendMsg = new SendMessage().setChatId(chatId);
 		String msgText = "Ups, da ist wohl ein Fehler aufgetreten.";
@@ -446,7 +446,7 @@ public class TestBot extends TelegramLongPollingBot {
 	 * @param message
 	 *            Message that requested a location evaluation
 	 */
-	private void startLocationDialog(long chatId, String text) {
+	private void processLocationDialog(long chatId, String text) {
 		KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
 		KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
 		kbLoc.setRequestLocation(true);
