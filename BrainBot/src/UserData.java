@@ -86,14 +86,14 @@ public class UserData {
 
 
                 // Create and execute a SELECT SQL statement.
-                PreparedStatement insertion = connection.prepareStatement("INSERT INTO Users(?,?,?,?,?,?,?)");
-                insertion.setString(0, personId.toString());
-                insertion.setString(1, lastName);
-                insertion.setString(2, firstName);
-                insertion.setString(3, address);
-                insertion.setString(4, city);
-                insertion.setString(5, tel);
-                insertion.setString(6, mail);
+                PreparedStatement insertion = connection.prepareStatement("INSERT INTO Users VALUES(?,?,?,?,?,?,?)");
+                insertion.setString(1, personId.toString());
+                insertion.setString(2, lastName);
+                insertion.setString(3, firstName);
+                insertion.setString(4, address);
+                insertion.setString(5, city);
+                insertion.setString(6, tel);
+                insertion.setString(7, mail);
                 
                 insertion.executeUpdate();
                 connection.close();
@@ -127,7 +127,7 @@ public class UserData {
 
                 // Create and execute a SELECT SQL statement.
                 PreparedStatement query = connection.prepareStatement("SELECT LASTNAME FROM Users WHERE PERSONID = ?");
-                query.setString(0, chatId.toString());
+                query.setString(1, chatId.toString());
 
                 ResultSet rs = query.executeQuery();
                 userExists = rs.next();
