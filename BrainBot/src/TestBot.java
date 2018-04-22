@@ -225,8 +225,13 @@ public class TestBot extends TelegramLongPollingBot {
 			for(RNVHaltestellenStop s : destinations.get(update.getMessage().getChatId()).stops) {
 				lines.addAll(Arrays.asList(s.lines));
 			}
-			String[] stringarr = null;
-			origins.put(update.getMessage().getChatId(), rnvApi.getClosestStopWithLines(loc, lines.toArray(stringarr)));
+			String[] linesArr = new String[lines.size()];
+			int cnt = 0;
+			for(String s:lines) {
+				linesArr[cnt] = s;
+				cnt++;
+			}
+			origins.put(update.getMessage().getChatId(), rnvApi.getClosestStopWithLines(loc, linesArr));
 			
 			boolean match = false;
 			String line = null;
