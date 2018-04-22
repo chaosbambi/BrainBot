@@ -21,6 +21,7 @@ import org.telegram.telegrambots.api.objects.Location;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -150,7 +151,7 @@ public class CoreBot extends TelegramLongPollingBot {
 
 			processLocationDialog(chatId, text);
 		 
-		}else if (text.toLowerCase().trim().contains("hier")) {
+		}else if (text.toLowerCase().trim().contains("plan")) {
 			
 			if (ldState == LocationDialogStates.NO_REQUEST_PENDING) {
 				dState = DialogStates.LocationDialog;
@@ -270,6 +271,9 @@ public class CoreBot extends TelegramLongPollingBot {
 		} catch (TelegramApiException e) {
 			System.err.println("Fehler beim Senden der Nachricht: ");
 			e.printStackTrace();
+		}
+		if(dState == DialogStates.LocationDialog && ldState == LocationDialogStates.CONNECTION_SUGGESTED) {
+			processLocationDialog(update.getMessage().getChatId(), "");
 		}
 	}
 
@@ -447,6 +451,7 @@ public class CoreBot extends TelegramLongPollingBot {
 		case REQUESTED_REASON:
 			cfs.get(chatId).setReason(text);
 			msgText = "Welche Linie betrifft deine Meldung?";
+			sendMsg.setReplyMarkup(new ReplyKeyboardRemove());
 			cdState = ComplainDialogStates.REQUESTED_LINE;
 			break;
 
@@ -545,7 +550,7 @@ public class CoreBot extends TelegramLongPollingBot {
 				msgText = "Die Eingabe enthielt leider keine Bekannte Haltestelle. Bitte erneut versuchen:";
 			}else {
 				destinations.put(chatId, destination);
-				msgText = "Wenn du mir deinen Standort mitteilst, werde ich die nächste Haltestelle bestimmen.";
+				msgText = "Wenn du mir deinen Standort mitteilst, werde ich die nächste Haltestelle in deiner Nähe bestimmen.";
 				ldState = LocationDialogStates.STARTINGPOINT_REQUESTED;
 				KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
 				KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
@@ -561,6 +566,10 @@ public class CoreBot extends TelegramLongPollingBot {
 			break;
 			
 		case STARTINGPOINT_REQUESTED:
+			msgText = "Ohne einen Startort kann ich leider keine Route bestimmen.";
+
+			ldState = LocationDialogStates.NO_REQUEST_PENDING;
+			dState = DialogStates.PendingForDialog;
 			break;
 			
 		case CONNECTION_SUGGESTED:

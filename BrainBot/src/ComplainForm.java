@@ -114,8 +114,8 @@ public class ComplainForm {
 	        hs.setSelectedAttribute(reason, true);
 	        
 	        
-	        //File fShow = new File("C:\\Users\\Marcel\\Downloads\\form1\\");
-	        //page1.save(fShow);
+	        File fShow = new File("src\\form1\\");
+	        page1.save(fShow);
 	       
 	        // Now submit the form by clicking the button and get back the second page.
 	        //final HtmlPage page2 = button.click();*/
