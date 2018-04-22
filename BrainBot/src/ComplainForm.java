@@ -1,12 +1,15 @@
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URL;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebWindow;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlSelect;
-import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 
@@ -70,10 +73,10 @@ public class ComplainForm {
 	}
 	
 	public void fillHtmlForm(UserData user) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
-	    try (final WebClient webClient = new WebClient()) {
+	    try (final WebClient webClient = new WebClient(BrowserVersion.FIREFOX_52)) {
 
 	        // Get the first page
-	        final HtmlPage page1 = webClient.getPage("file:src\\form1.html");
+	        final HtmlPage page1 = webClient.getPage("file:src\\form.html");
 
 	        // Get the form that we are dealing with and within that form, 
 	        // find the submit button and the field that we want to change.
@@ -109,9 +112,13 @@ public class ComplainForm {
 	        textArea.type(message);
 	        HtmlSelect hs = form.getSelectByName("tx_spbettercontact_pi1-543[reason]");
 	        hs.setSelectedAttribute(reason, true);
+	        
+	        
+	        //File fShow = new File("C:\\Users\\Marcel\\Downloads\\form1\\");
+	        //page1.save(fShow);
 	       
 	        // Now submit the form by clicking the button and get back the second page.
-	        //final HtmlPage page2 = button.click();
+	        //final HtmlPage page2 = button.click();*/
 	    }
 	}
 	
