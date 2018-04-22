@@ -30,7 +30,7 @@ import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class TestBot extends TelegramLongPollingBot {
+public class CoreBot extends TelegramLongPollingBot {
 
 	private DialogStates dState = DialogStates.PendingForDialog;
 	private WelcomeDialogStates wdState = WelcomeDialogStates.DialogUnfinished;

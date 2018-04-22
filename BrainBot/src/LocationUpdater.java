@@ -8,7 +8,7 @@ public class LocationUpdater implements Runnable{
 	private final int updates;
 	private final long cID;
 	private final float lon, lat;
-	private TestBot bot;
+	private CoreBot bot;
 	
 	/**
 	 * 
@@ -17,7 +17,7 @@ public class LocationUpdater implements Runnable{
 	 * @param sl the SendLocation (which was sent with the original message - to grab live period and location)
 	 * @param bot The bot instance, to execute the updates in it
 	 */
-	public LocationUpdater(int messageID, long chatID, SendLocation sl, TestBot bot) {
+	public LocationUpdater(int messageID, long chatID, SendLocation sl, CoreBot bot) {
 		this.mID = messageID;
 		this.cID = chatID;
 		this.updates = sl.getLivePeriod();

@@ -15,7 +15,7 @@ public class Main {
         //Instantiate Telegram Bots API
 		TelegramBotsApi botsApi = new TelegramBotsApi();
 		
-		TestBot t = new TestBot();
+		CoreBot t = new CoreBot();
         //Register our bot
 		try {
 			botsApi.registerBot(t);
