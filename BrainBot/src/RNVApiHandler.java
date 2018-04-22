@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,12 +96,6 @@ public class RNVApiHandler {
 		jsonString = getHttpStream(reqString, false);
 		Type datType = new TypeToken<Map<String,RNVHaltestelle>>(){private static final long serialVersionUID = 1L;}.getType();
 		RNVApiHandler.haltestellen = gson.fromJson(jsonString, datType);
-		
-		/*
-		 * 			for(String s: haltestellen.keySet()){
-						System.out.println(s + " - " + haltestellen.get(s).name);
-					}
-		 */
 	}
 	
 	public RNVHaltestelle getClosestStop(Location loc) {

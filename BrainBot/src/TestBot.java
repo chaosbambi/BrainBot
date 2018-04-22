@@ -8,16 +8,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.apache.commons.io.FileUtils;
 import org.telegram.telegrambots.api.methods.GetFile;
-import org.telegram.telegrambots.api.methods.send.SendLocation;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
-import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Contact;
 import org.telegram.telegrambots.api.objects.File;
 import org.telegram.telegrambots.api.objects.Location;
@@ -71,7 +68,6 @@ public class TestBot extends TelegramLongPollingBot {
 					handleText(update.getMessage().getChatId(), vr.getDisplayText());
 					
 				} catch (IOException | UnsupportedAudioFileException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			} else if (update.getMessage().hasLocation()) {
@@ -205,13 +201,13 @@ public class TestBot extends TelegramLongPollingBot {
 		System.out.println("Name: " + cont.getFirstName() + " " + cont.getLastName()); // May contain null parts - in
 																						// User und Contact enthalten
 		System.out.println("Tel.: " + cont.getPhoneNumber());
-		if(wdState == wdState.REQUESTED_PHONE) {
+		if(wdState == WelcomeDialogStates.REQUESTED_PHONE) {
 			processWelcomeDialog(update.getMessage().getChatId(),cont.getPhoneNumber());
 		}
 	}
 
 	/**
-	 * Proper location handling TODO
+	 * Location Message handling
 	 * 
 	 * @param update
 	 */
@@ -501,7 +497,6 @@ public class TestBot extends TelegramLongPollingBot {
 			try {
 				cfs.get(chatId).fillHtmlForm(user);
 			} catch (FailingHttpStatusCodeException | IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			cdState = ComplainDialogStates.COMPLAIN_SEND;
@@ -593,7 +588,6 @@ public class TestBot extends TelegramLongPollingBot {
 			break;		
 		}
 
-
 		sendMsg.setText(msgText);
 		try {
 			execute(sendMsg);
@@ -601,32 +595,6 @@ public class TestBot extends TelegramLongPollingBot {
 			e.printStackTrace();
 		}
 	
-	}
-
-	/**
-	 * Location handling proof of concept A received location gets mirrored and then
-	 * moves with live updates
-	 * 
-	 * @param update
-	 *            The Update-Object that triggered message processing
-	 */
-	private void locationTest(Update update) {
-		Location loc = update.getMessage().getLocation();
-		long cid = update.getMessage().getChatId();
-		float lat = loc.getLatitude();
-		float lon = loc.getLongitude();
-		int period = 120;
-		SendLocation sl = new SendLocation(lat, lon).setLivePeriod(period).setChatId(cid);
-		Message sent = null;
-		try {
-			sent = execute(sl);
-		} catch (TelegramApiException e1) {
-			e1.printStackTrace();
-		}
-		if (sent != null) {
-			Thread updater = new Thread(new LocationUpdater(sent.getMessageId(), cid, sl, this));
-			updater.start();
-		}
 	}
 
 }
