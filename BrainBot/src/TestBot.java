@@ -5,8 +5,11 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
@@ -39,7 +42,8 @@ public class TestBot extends TelegramLongPollingBot {
 	
 	private HashMap<Long,UserData> users = new HashMap<>();
 	private HashMap<Long,ComplainForm> cfs = new HashMap<>();
-	
+	private HashMap<Long,RNVHaltestelle> destinations = new HashMap<>();
+	private HashMap<Long,RNVHaltestelle> origins = new HashMap<>();
 	
 	@Override
 	public String getBotUsername() {
@@ -148,7 +152,7 @@ public class TestBot extends TelegramLongPollingBot {
 
 		} else if (dState == DialogStates.LocationDialog) {
 
-			processComplainDialog(chatId, text);
+			processLocationDialog(chatId, text);
 		 
 		}else if (text.toLowerCase().trim().contains("hier")) {
 			
@@ -213,30 +217,59 @@ public class TestBot extends TelegramLongPollingBot {
 	 */
 	private void handleLocation(Update update) {
 		Location loc = update.getMessage().getLocation();
-		
-		RNVApiHandler rna = new RNVApiHandler();
-		RNVHaltestelle closest = rna.getClosestStop(loc);
-		
+		RNVApiHandler rnvApi = new RNVApiHandler();
 		SendMessage sendMsg = new SendMessage().setChatId(update.getMessage().getChatId());
-		sendMsg.setText("Nächste Haltestelle: " + closest.name);
 		
+		if(dState == DialogStates.LocationDialog && ldState == LocationDialogStates.STARTINGPOINT_REQUESTED) {
+			Set<String> lines = new HashSet<>();
+			for(RNVHaltestellenStop s : destinations.get(update.getMessage().getChatId()).stops) {
+				lines.addAll(Arrays.asList(s.lines));
+			}
+			String[] stringarr = null;
+			origins.put(update.getMessage().getChatId(), rnvApi.getClosestStopWithLines(loc, lines.toArray(stringarr)));
+			
+			boolean match = false;
+			String line = null;
+			for(RNVHaltestellenStop rhs1 :this.destinations.get(update.getMessage().getChatId()).stops) {
+				if(match) {
+					break;
+				}
+				for(RNVHaltestellenStop rhs2 : this.origins.get(update.getMessage().getChatId()).stops) {
+					if(match) {
+						break;
+					}
+					for(String line1 : rhs1.lines) {
+						if(match) {
+							break;
+						}
+						for(String line2 : rhs2.lines) {
+							if(line1.equals(line2)) {
+								line = line1;
+								match = true;
+								break;
+							}
+						}
+					}
+				}
+			}
+			
+			sendMsg.setText("Dies ist deine Verbindung:\r\n"
+						+ "Von: " + this.origins.get(update.getMessage().getChatId()).name + "\r\n"
+						+ "Nach: " + this.destinations.get(update.getMessage().getChatId()).name + "\r\n"
+						+ "Fahrt z.B. mit Linie " + line);
+			ldState = LocationDialogStates.CONNECTION_SUGGESTED;
+		}else {
+			RNVHaltestelle closest = rnvApi.getClosestStop(loc);
+			
+			
+			sendMsg.setText("Nächste Haltestelle: " + closest.name);
+		}	
 		try {
 			execute(sendMsg);
 		} catch (TelegramApiException e) {
 			System.err.println("Fehler beim Senden der Nachricht: ");
 			e.printStackTrace();
 		}
-		// Maybe other maps? List of Map.Entry? Will need to be sorted!
-		// Query possible Stops, put them in "stops"
-		// Sort by distance
-		// Select stop with lowest distance
-		// Runtime: O(way too much)
-		/*
-		 * This is only a basic concept for finding the closest possible stop. More
-		 * advanced systems like travel time vs stop distance calculation would require
-		 * a more refined algorithm.
-		 */
-
 	}
 
 	/**
@@ -472,6 +505,7 @@ public class TestBot extends TelegramLongPollingBot {
 		case COMPLAIN_SEND:
 
 			cdState = ComplainDialogStates.NO_COMPLAIN_DIALOG_IN_USE;
+			dState = DialogStates.PendingForDialog;
 			break;
 
 		default:
@@ -496,36 +530,43 @@ public class TestBot extends TelegramLongPollingBot {
 	private void processLocationDialog(long chatId, String text) {
 		SendMessage sendMsg = new SendMessage().setChatId(chatId);
 		String msgText = "Ups, da ist wohl ein Fehler aufgetreten.";
+		RNVApiHandler rnvApi = new RNVApiHandler();
 
 		switch(ldState) {
 		case LOCATION_DIALOG_STARTED:
 			msgText = "Bitte teile mir deine Zielhaltestelle mit:";
 			ldState = LocationDialogStates.DESTINATION_REQUESTED;
+			
 			break;
 			
 		case DESTINATION_REQUESTED:
-			msgText = "Wenn du mir deinen Standort mitteilst, werde ich die di nächste Haltestelle bestimmen.";
-			ldState = LocationDialogStates.STARTINGPOINT_REQUESTED;
-			KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
-			KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
-			kbLoc.setRequestLocation(true);
-			KeyboardRow kr = new KeyboardRow();
-			kr.add(kbLoc);
-			kr.add(kbNo);
-			ArrayList<KeyboardRow> rows = new ArrayList<>();
-			rows.add(kr);
-			ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+			RNVHaltestelle destination = rnvApi.getStopByContainedName(text);
+			if(destination == null) {
+				msgText = "Die Eingabe enthielt leider keine Bekannte Haltestelle. Bitte erneut versuchen:";
+			}else {
+				destinations.put(chatId, destination);
+				msgText = "Wenn du mir deinen Standort mitteilst, werde ich die nächste Haltestelle bestimmen.";
+				ldState = LocationDialogStates.STARTINGPOINT_REQUESTED;
+				KeyboardButton kbLoc = new KeyboardButton("Standort angeben");
+				KeyboardButton kbNo = new KeyboardButton("Nein, danke.");
+				kbLoc.setRequestLocation(true);
+				KeyboardRow kr = new KeyboardRow();
+				kr.add(kbLoc);
+				kr.add(kbNo);
+				ArrayList<KeyboardRow> rows = new ArrayList<>();
+				rows.add(kr);
+				ReplyKeyboardMarkup rkm = new ReplyKeyboardMarkup().setKeyboard(rows).setOneTimeKeyboard(true);
+				sendMsg.setReplyMarkup(rkm);
+			}
 			break;
 			
 		case STARTINGPOINT_REQUESTED:
-			msgText = "Ich suche eine Verbindung für dich.";
-			ldState = LocationDialogStates.CONNECTION_SUGGESTED;
 			break;
 			
 		case CONNECTION_SUGGESTED:
 			msgText = "Gute Fahrt. Möchtest du direkt ein Ticket erwerben?";
-			ldState = LocationDialogStates.NO_REQUEST_PENDING;
-			KeyboardButton kbYes = new KeyboardButton("Ja, bitte");
+			ldState = LocationDialogStates.CONNECTION_PAYMENT;
+			KeyboardButton kbYes = new KeyboardButton("Ja, bitte.");
 			KeyboardButton kbNope = new KeyboardButton("Nein, danke.");
 			KeyboardRow krow = new KeyboardRow();
 			krow.add(kbYes);
@@ -533,7 +574,16 @@ public class TestBot extends TelegramLongPollingBot {
 			ArrayList<KeyboardRow> krows = new ArrayList<>();
 			krows.add(krow);
 			ReplyKeyboardMarkup rkmu = new ReplyKeyboardMarkup().setKeyboard(krows).setOneTimeKeyboard(true);
+			sendMsg.setReplyMarkup(rkmu);
 			break;
+		case CONNECTION_PAYMENT:
+			if(text.equals("Ja, bitte.")) {
+				msgText = "Zahlungsvorgang...";
+			}else {
+				msgText = "Klassisches Ticket gewählt.";
+			}
+			ldState = LocationDialogStates.NO_REQUEST_PENDING;
+			dState = DialogStates.PendingForDialog;
 		default:
 			break;		
 		}

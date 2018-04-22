@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -106,9 +107,10 @@ public class RNVApiHandler {
 	
 	public RNVHaltestelle getClosestStop(Location loc) {
 		HashMap<String, Double> distances = new HashMap<>();
-		for(String s1: haltestellen.keySet()){
+		for(String s1: RNVApiHandler.haltestellen.keySet()){
 			for(RNVHaltestellenStop rhs : RNVApiHandler.haltestellen.get(s1).stops) {
 				distances.put(s1, Math.pow(rhs.lat - loc.getLatitude(), 2.0) + Math.pow(rhs.lon - loc.getLongitude(), 2.0));
+				break;
 			}
 		}
 		double min = Double.MAX_VALUE; //Initialize with max
@@ -124,6 +126,58 @@ public class RNVApiHandler {
 		}else {
 			return null;
 		}
+	}
+	
+	public RNVHaltestelle getStopByContainedName(String stopName) {
+		for(String s : RNVApiHandler.haltestellen.keySet()) {
+			if(stopName.toLowerCase().contains(RNVApiHandler.haltestellen.get(s).name.toLowerCase())) {
+				return RNVApiHandler.haltestellen.get(s);
+			}
+		}
+		return null;
+	}
+	
+	public RNVHaltestelle getClosestStopWithLine(Location loc, String transportLine) {
+		String[] lines = {transportLine};
+		return getClosestStopWithLines(loc, lines);
+	}
+	
+	public RNVHaltestelle getClosestStopWithLines(Location loc, String[] transportLines) {
+		boolean match = false;
+		HashMap<String, Double> distances = new HashMap<>();
+		for(String s1: RNVApiHandler.haltestellen.keySet()){
+			match = false;
+			for(RNVHaltestellenStop rhs : RNVApiHandler.haltestellen.get(s1).stops) {
+				if(match) {
+					break;
+				}
+				for(String line1 : rhs.lines) {
+					if(match) {
+						break;
+					}
+					for(String line2 : transportLines) {
+						if(line1.equals(line2)) {
+							distances.put(s1, Math.pow(rhs.lat - loc.getLatitude(), 2.0) + Math.pow(rhs.lon - loc.getLongitude(), 2.0));
+							match = true;
+							break;
+						}
+					}
+				}
+			}
+		}
+		double min = Double.MAX_VALUE; //Initialize with max
+		String busStop = null;
+		for(String s2: distances.keySet()) {
+			if(distances.get(s2) < min) {
+				min = distances.get(s2);
+				busStop = s2;
+			}
+		}
+		if(busStop != null && !busStop.isEmpty()) {
+			return RNVApiHandler.haltestellen.get(busStop);
+		}else {
+			return null;
+		}	
 	}
 	
 	public void getData(String dataPath, String filename){
